@@ -1,37 +1,141 @@
 #include <ncurses.h>
 
 #include <stdlib.h>
-#include <assert.h>
 
 #include "map.h"
+#include "symbols.h"
 
-static void dig_room(Map* map, Vec2 pos, Vec2 size)
+static int rand_int(int min, int max)
+{
+    int result = rand() % max;
+    if (result < min)
+        return min;
+    else
+        return result;
+}
+
+static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
+{
+    if (!map_check_bounds(end))
+        return false;
+
+    for (int y = begin.y; y < end.y; y++)
+    {
+        for (int x = begin.x; x < end.x; x++)
+        {
+            if (map->tiles[y][x].symbol != WALL)
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+static void dig(Map* map, Vec2 pos)
+{
+    map->tiles[pos.y][pos.x].symbol = FLOOR;
+    map->tiles[pos.y][pos.x].is_walkable = true;
+}
+
+static bool dig_room(Map* map, Vec2 pos, Vec2 size)
 {
     if (!map_check_bounds(pos) || !map_check_bounds(vec_add(pos, size)))
     {
-        return;
+        return false;
     }
 
-    for (int y = pos.y; y < pos.y + size.y; y++)
+    // A room's position is at its upper-left corner.
+    // So we +1 the position to not dig this corner.
+    for (int y = pos.y + 1; y < pos.y + size.y; y++)
     {
-        for (int x = pos.x; x < pos.x + size.x; x++)
+        for (int x = pos.x + 1; x < pos.x + size.x; x++)
         {
-            // Skip the tiles that are already rooms or
-            // the tiles that are near rooms.
-            if (map->tiles[y][x].symbol == '.' ||
-                map->tiles[y + 1][x + 1].symbol == '.' ||
-                map->tiles[y + 1][x].symbol == '.' || map->tiles[y][x + 1].symbol == '.')
-                continue;
-            map->tiles[y][x].symbol = '.';
-            map->tiles[y][x].is_walkable = true;
+            dig(map, vec2(x, y));
+        }
+    }
+
+    return true;
+}
+
+static void fill_map_with_walls(Map* map)
+{
+    for (int y = 0; y < MAP_HEIGHT; y++)
+    {
+        for (int x = 0; x < MAP_WIDTH; x++)
+        {
+            map->tiles[y][x].pos = vec2(x, y);
+            map->tiles[y][x].symbol = WALL;
+            map->tiles[y][x].is_walkable = false;
         }
     }
 }
 
-// Digs a corridor from `room2` to `room1`.
-static void dig_corridor(Map* map, Vec2 room1_pos, Vec2 room1_size, Vec2 room2_pos,
-                         Vec2 room2_size)
+static void connect_rooms(Map* map, Vec2 center1, Vec2 center2)
 {
+    Vec2 temp;
+    temp.x = center1.x;
+    temp.y = center1.y;
+
+    while (true)
+    {
+        if (abs((temp.x - 1) - center2.x) < abs(temp.x - center2.x))
+            temp.x--;
+        else if (abs((temp.x + 1) - center2.x) < abs(temp.x - center2.x))
+            temp.x++;
+        else if (abs((temp.y + 1) - center2.y) < abs(temp.y - center2.y))
+            temp.y++;
+        else if (abs((temp.y - 1) - center2.y) < abs(temp.y - center2.y))
+            temp.y--;
+        else
+            break;
+
+        dig(map, temp);
+    }
+}
+
+// Returns the rogue's spawn position.
+static Vec2 dig_rooms(Map* map)
+{
+    Vec2 spawn_pos = vec2(0, 0);
+    for (int i = 0; i < ROOM_DENSITY; i++)
+    {
+        Vec2 pos = vec2(rand_int(1, MAP_WIDTH), rand_int(1, MAP_HEIGHT));
+        Vec2 size = vec2(rand_int(ROOM_SIZE_MIN.x, ROOM_SIZE_MAX.x),
+                         rand_int(ROOM_SIZE_MIN.y, ROOM_SIZE_MAX.y));
+
+        if (!is_area_available(map, pos, vec_add(pos, vec_add_int(size, 1))))
+        {
+            continue;
+        }
+
+        if (dig_room(map, pos, size))
+        {
+            Vec2 center = vec2(pos.x + size.x / 2, pos.y + size.y / 2);
+            Room room = {pos, size, center};
+            vec_push(&map->rooms, room);
+
+            spawn_pos = center;
+
+            if (i > 0)
+            {
+                connect_rooms(map, center, map->rooms.data[map->rooms.length - 2].center);
+            }
+        }
+    }
+    return spawn_pos;
+}
+
+Map* map_generate(Vec2* rogue_start_pos)
+{
+    Map* map = malloc(sizeof(Map));
+    vec_init(&map->rooms);
+
+    fill_map_with_walls(map);
+    *rogue_start_pos = dig_rooms(map);
+
+    return map;
 }
 
 void map_draw(Map* map)
@@ -45,46 +149,9 @@ void map_draw(Map* map)
     }
 }
 
-Map* map_generate(Vec2* rogue_start_pos)
-{
-    Map* map = malloc(sizeof(Map));
-
-    // Fill the whole map with walls.
-    for (int y = 0; y < MAP_HEIGHT; y++)
-    {
-        for (int x = 0; x < MAP_WIDTH; x++)
-        {
-            map->tiles[y][x].pos = vec2(x, y);
-            map->tiles[y][x].symbol = '#';
-            map->tiles[y][x].is_walkable = false;
-        }
-    }
-
-    // Dig rooms randomly.
-    int num_rooms = (rand() % 20) + 15;
-    int room_to_spawn_rogue = rand() % (num_rooms - 1);
-    Vec2 prev_room_pos = vec2(0, 0);
-    Vec2 prev_room_size = vec2(0, 0);
-    for (int i = 0; i < num_rooms; i++)
-    {
-        Vec2 pos = vec2((rand() % (MAP_WIDTH - 20)) + 1, (rand() % (MAP_HEIGHT - 6)) + 1);
-        Vec2 size = vec2((rand() % 19) + 4, (rand() % 5) + 3);
-        dig_room(map, pos, size);
-        dig_corridor(map, pos, size, prev_room_pos, prev_room_size);
-        prev_room_pos = pos;
-        prev_room_size = size;
-
-        if (i == room_to_spawn_rogue)
-        {
-            *rogue_start_pos = vec2(pos.x + (size.x / 2), pos.y + (size.y / 2));
-        }
-    }
-
-    return map;
-}
-
 void map_free(Map* map)
 {
+    vec_deinit(&map->rooms);
     free(map);
     map = NULL;
 }
