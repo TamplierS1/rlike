@@ -5,39 +5,40 @@
 #include <ncurses.h>
 
 #include "map.h"
-#include "rogue.h"
+#include "actor.h"
+#include "symbols.h"
 
 Map* g_map = NULL;
-Rogue g_rogue = {{0, 0}, '@'};
+Actor g_player = {{0, 0}, PLAYER};
 
 void draw()
 {
     map_draw(g_map);
-    mvaddch(g_rogue.pos.y, g_rogue.pos.x, g_rogue.symbol);
+    mvaddch(g_player.pos.y, g_player.pos.x, g_player.symbol);
 }
 
-void handle_input(char ch)
+void handle_input(int ch)
 {
     switch (ch)
     {
         case 'w':
         {
-            rogue_move(g_map, &g_rogue, vec2(0, -1));
+            actor_move(g_map, &g_player, vec2(0, -1));
             break;
         }
         case 's':
         {
-            rogue_move(g_map, &g_rogue, vec2(0, 1));
+            actor_move(g_map, &g_player, vec2(0, 1));
             break;
         }
         case 'a':
         {
-            rogue_move(g_map, &g_rogue, vec2(-1, 0));
+            actor_move(g_map, &g_player, vec2(-1, 0));
             break;
         }
         case 'd':
         {
-            rogue_move(g_map, &g_rogue, vec2(1, 0));
+            actor_move(g_map, &g_player, vec2(1, 0));
             break;
         }
         case ERR:  // No key was pressed - skip.
@@ -57,7 +58,7 @@ void init()
     curs_set(0);
 
     srand(time(NULL));
-    g_map = map_generate(&g_rogue.pos);
+    g_map = map_generate(&g_player.pos);
 }
 
 void run()

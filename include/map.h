@@ -8,6 +8,12 @@
 
 #include "vec.h"
 
+#include "vec2.h"
+
+#define ROOM_DENSITY 70
+#define ROOM_SIZE_MIN vec2(9, 5)
+#define ROOM_SIZE_MAX vec2(19, 8)
+
 typedef struct
 {
     Vec2 pos;
@@ -17,7 +23,17 @@ typedef struct
 
 typedef struct
 {
+    Vec2 pos;
+    Vec2 size;
+    Vec2 center;
+} Room;
+
+typedef vec_t(Room) vec_room_t;
+
+typedef struct
+{
     Tile tiles[MAP_HEIGHT][MAP_WIDTH];
+    vec_room_t rooms;
 } Map;
 
 Map* map_generate(Vec2* rogue_start_pos);
