@@ -7,14 +7,38 @@
 #include "map.h"
 #include "actor.h"
 #include "symbols.h"
+#include "event.h"
 
 Map* g_map = NULL;
-Actor g_player = {{0, 0}, PLAYER};
+// The player always has `id` 0.
+Actor g_player = {0, {0, 0}, PLAYER, 100, 10, true};
+vec_actor_t g_enemies;
+
+void clear_dead_enemies()
+{
+    int i;
+    Actor enemy;
+    vec_foreach(&g_enemies, enemy, i)
+    {
+        if (!enemy.is_alive)
+        {
+            vec_swapsplice(&g_enemies, i, 1);
+        }
+    }
+}
 
 void draw()
 {
     map_draw(g_map);
-    mvaddch(g_player.pos.y, g_player.pos.x, g_player.symbol);
+
+    int i;
+    Actor enemy;
+    vec_foreach(&g_enemies, enemy, i)
+    {
+        actor_draw(&enemy);
+    }
+
+    actor_draw(&g_player);
 }
 
 void handle_input(int ch)
@@ -23,22 +47,22 @@ void handle_input(int ch)
     {
         case 'w':
         {
-            actor_move(g_map, &g_player, vec2(0, -1));
+            actor_move(g_map, &g_enemies, &g_player, vec2(0, -1));
             break;
         }
         case 's':
         {
-            actor_move(g_map, &g_player, vec2(0, 1));
+            actor_move(g_map, &g_enemies, &g_player, vec2(0, 1));
             break;
         }
         case 'a':
         {
-            actor_move(g_map, &g_player, vec2(-1, 0));
+            actor_move(g_map, &g_enemies, &g_player, vec2(-1, 0));
             break;
         }
         case 'd':
         {
-            actor_move(g_map, &g_player, vec2(1, 0));
+            actor_move(g_map, &g_enemies, &g_player, vec2(1, 0));
             break;
         }
         case ERR:  // No key was pressed - skip.
@@ -58,15 +82,22 @@ void init()
     curs_set(0);
 
     srand(time(NULL));
-    g_map = map_generate(&g_player.pos);
+
+    vec_init(&g_enemies);
+    g_map = map_generate(&g_player.pos, &g_enemies);
+
+    event_system_init();
+
+    event_subscribe(actor_on_event);
 }
 
-void run()
+void update()
 {
     int ch;
     while ((ch = getch()) && ch != 'q')
     {
         handle_input(ch);
+        clear_dead_enemies();
         draw();
         refresh();
     }
@@ -74,6 +105,8 @@ void run()
 
 void end()
 {
+    vec_deinit(&g_enemies);
+    event_system_deinit();
     map_free(g_map);
     endwin();
 }
@@ -81,7 +114,7 @@ void end()
 int main()
 {
     init();
-    run();
+    update();
     end();
     return 0;
 }

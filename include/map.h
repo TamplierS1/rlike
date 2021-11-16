@@ -14,6 +14,8 @@
 #define ROOM_SIZE_MIN vec2(9, 5)
 #define ROOM_SIZE_MAX vec2(19, 8)
 
+#define ENEMY_ROOMS 6
+
 typedef struct
 {
     Vec2 pos;
@@ -36,7 +38,9 @@ typedef struct
     vec_room_t rooms;
 } Map;
 
-Map* map_generate(Vec2* rogue_start_pos);
+// I can't include `actor.h` (it would cause a cyclic dependency),
+// so I have to use void* here.
+Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies);
 void map_draw(Map* map);
 void map_free(Map* map);
 
