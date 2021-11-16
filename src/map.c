@@ -4,6 +4,7 @@
 
 #include "map.h"
 #include "symbols.h"
+#include "actor.h"
 
 static int rand_int(int min, int max)
 {
@@ -41,7 +42,7 @@ static void dig(Map* map, Vec2 pos)
 
 static bool dig_room(Map* map, Vec2 pos, Vec2 size)
 {
-    if (!map_check_bounds(pos) || !map_check_bounds(vec_add(pos, size)))
+    if (!map_check_bounds(pos) || !map_check_bounds(vec2_add(pos, size)))
     {
         return false;
     }
@@ -57,6 +58,24 @@ static bool dig_room(Map* map, Vec2 pos, Vec2 size)
     }
 
     return true;
+}
+
+static void spawn_enemies(Map* map, vec_actor_t* enemies)
+{
+    static int enemy_id = 1;
+
+    int enemies_spawned = 0;
+    int j;
+    Room room;
+    vec_foreach(&map->rooms, room, j)
+    {
+        if (enemies_spawned >= ENEMY_ROOMS)
+            return;
+
+        Actor enemy = {enemy_id++, room.center, ENEMY, 30, 5, true};
+        vec_push(enemies, enemy);
+        enemies_spawned++;
+    }
 }
 
 static void fill_map_with_walls(Map* map)
@@ -105,7 +124,7 @@ static Vec2 dig_rooms(Map* map)
         Vec2 size = vec2(rand_int(ROOM_SIZE_MIN.x, ROOM_SIZE_MAX.x),
                          rand_int(ROOM_SIZE_MIN.y, ROOM_SIZE_MAX.y));
 
-        if (!is_area_available(map, pos, vec_add(pos, vec_add_int(size, 1))))
+        if (!is_area_available(map, pos, vec2_add(pos, vec2_add_int(size, 1))))
         {
             continue;
         }
@@ -127,13 +146,14 @@ static Vec2 dig_rooms(Map* map)
     return spawn_pos;
 }
 
-Map* map_generate(Vec2* rogue_start_pos)
+Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
 {
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
 
     fill_map_with_walls(map);
-    *rogue_start_pos = dig_rooms(map);
+    *out_rogue_start_pos = dig_rooms(map);
+    spawn_enemies(map, (vec_actor_t*)out_enemies);
 
     return map;
 }
