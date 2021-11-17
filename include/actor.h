@@ -9,6 +9,7 @@ typedef struct
     int id;
     Vec2 pos;
     char symbol;
+    TCOD_color_t color;
 
     int hp;
     int dmg;

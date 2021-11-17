@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 #include "vec.h"
+#include <libtcod.h>
 
 #include "vec2.h"
 
@@ -27,6 +28,8 @@ typedef struct
     Vec2 pos;
     char symbol;
     bool is_walkable;
+    TCOD_color_t back_color;
+    TCOD_color_t fore_color;
 } Tile;
 
 typedef struct
