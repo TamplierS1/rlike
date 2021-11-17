@@ -36,6 +36,8 @@ static void dig(Map* map, Vec2 pos)
 {
     map->tiles[pos.y][pos.x].symbol = FLOOR;
     map->tiles[pos.y][pos.x].is_walkable = true;
+    map->tiles[pos.y][pos.x].back_color = FLOOR_BACK_COLOR;
+    map->tiles[pos.y][pos.x].fore_color = FLOOR_FORE_COLOR;
 }
 
 static bool dig_room(Map* map, Vec2 pos, Vec2 size)
@@ -70,7 +72,7 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         if (enemies_spawned >= ENEMY_ROOMS)
             return;
 
-        Actor enemy = {enemy_id++, room.center, ENEMY, 30, 5, true};
+        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, 30, 5, true};
         vec_push(enemies, enemy);
         enemies_spawned++;
     }
@@ -85,6 +87,8 @@ static void fill_map_with_walls(Map* map)
             map->tiles[y][x].pos = vec2(x, y);
             map->tiles[y][x].symbol = WALL;
             map->tiles[y][x].is_walkable = false;
+            map->tiles[y][x].back_color = WALL_BACK_COLOR;
+            map->tiles[y][x].fore_color = WALL_FORE_COLOR;
         }
     }
 }
