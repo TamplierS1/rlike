@@ -28,6 +28,8 @@ typedef struct
     Vec2 pos;
     char symbol;
     bool is_walkable;
+    bool is_visible;
+    bool was_explored;
     TCOD_color_t back_color;
     TCOD_color_t fore_color;
 } Tile;
@@ -52,6 +54,7 @@ typedef struct
 Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies);
 void map_free(Map* map);
 
+void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius);
 bool map_check_bounds(Vec2 pos);
 bool map_is_walkable(Map* map, Vec2 pos);
 
