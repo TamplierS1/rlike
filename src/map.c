@@ -4,6 +4,44 @@
 #include "symbols.h"
 #include "actor.h"
 
+static void cast_ray(Map* map, Vec2 begin, Vec2 end)
+{
+    int x0 = begin.x, y0 = begin.y;
+    int x1 = end.x, y1 = end.y;
+
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    bool end_ray = false;
+    for (;;)
+    {
+        if (end_ray)
+            return;
+
+        if (map->tiles[y0][x0].symbol == WALL)
+            end_ray = true;
+
+        map->tiles[y0][x0].is_visible = true;
+        map->tiles[y0][x0].was_explored = true;
+
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        e2 = 2 * err;
+        if (e2 >= dy)
+        {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx)
+        {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
 static int rand_int(int min, int max)
 {
     int result = rand() % max;
@@ -34,10 +72,13 @@ static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
 
 static void dig(Map* map, Vec2 pos)
 {
-    map->tiles[pos.y][pos.x].symbol = FLOOR;
-    map->tiles[pos.y][pos.x].is_walkable = true;
-    map->tiles[pos.y][pos.x].back_color = FLOOR_BACK_COLOR;
-    map->tiles[pos.y][pos.x].fore_color = FLOOR_FORE_COLOR;
+    map->tiles[pos.y][pos.x] = (Tile){.pos = pos,
+                                      .symbol = FLOOR,
+                                      .is_walkable = true,
+                                      .is_visible = false,
+                                      .was_explored = false,
+                                      .back_color = FLOOR_BACK_COLOR,
+                                      .fore_color = FLOOR_FORE_COLOR};
 }
 
 static bool dig_room(Map* map, Vec2 pos, Vec2 size)
@@ -84,11 +125,15 @@ static void fill_map_with_walls(Map* map)
     {
         for (int x = 0; x < MAP_WIDTH; x++)
         {
-            map->tiles[y][x].pos = vec2(x, y);
-            map->tiles[y][x].symbol = WALL;
-            map->tiles[y][x].is_walkable = false;
-            map->tiles[y][x].back_color = WALL_BACK_COLOR;
-            map->tiles[y][x].fore_color = WALL_FORE_COLOR;
+            map->tiles[y][x] = (Tile){
+                .pos = vec2(x, y),
+                .symbol = WALL,
+                .is_walkable = false,
+                .is_visible = false,
+                .was_explored = false,
+                .back_color = WALL_BACK_COLOR,
+                .fore_color = WALL_FORE_COLOR,
+            };
         }
     }
 }
@@ -165,6 +210,35 @@ void map_free(Map* map)
     vec_deinit(&map->rooms);
     free(map);
     map = NULL;
+}
+
+void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
+{
+    Vec2 pos = player_pos;
+    int radius = player_vision_radius;
+
+    // Make every cell in the visible radius invisible.
+    for (int x = pos.x - radius - 1; x <= pos.x + radius + 1; ++x)
+    {
+        for (int y = pos.y - radius - 1; y <= pos.y + radius + 1; ++y)
+        {
+            map->tiles[y][x].is_visible = false;
+        }
+    }
+
+    // Cast rays to the upper and bottom part of visible radius.
+    for (int x = pos.x - radius; x <= pos.x + radius; ++x)
+    {
+        cast_ray(map, pos, vec2(x, pos.y - radius));
+        cast_ray(map, pos, vec2(x, pos.y + radius));
+    }
+
+    // Right and left part.
+    for (int y = pos.y - radius; y <= pos.y + radius; ++y)
+    {
+        cast_ray(map, pos, vec2(pos.x + radius, y));
+        cast_ray(map, pos, vec2(pos.x - radius, y));
+    }
 }
 
 bool map_check_bounds(Vec2 pos)

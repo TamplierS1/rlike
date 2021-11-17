@@ -8,7 +8,7 @@
 #define FLOOR ' '
 #define ENEMY '%'
 
-#define FLOOR_BACK_COLOR (TCOD_color_t){0, 0, 0}
+#define FLOOR_BACK_COLOR (TCOD_color_t){67, 46, 32}
 #define FLOOR_FORE_COLOR (TCOD_color_t){91, 71, 51}
 #define WALL_BACK_COLOR (TCOD_color_t){0, 0, 0}
 #define WALL_FORE_COLOR (TCOD_color_t){79, 73, 67}

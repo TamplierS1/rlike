@@ -13,6 +13,8 @@
 #include "gui.h"
 #include "error.h"
 
+#define PLAYER_VISION_RADIUS 12
+
 static TCOD_Console* g_console;
 static TCOD_Tileset* g_tileset;
 static TCOD_Context* g_context;
@@ -49,27 +51,36 @@ static void clear_dead_enemies()
 
 /************ RENDERING *************/
 
+static void draw(Vec2 pos, char symbol, TCOD_color_t fore, TCOD_color_t back,
+                 bool is_visible, bool was_explored)
+{
+    if (!is_visible && !was_explored)
+        return;
+
+    TCOD_color_t resulting_fore = fore;
+    TCOD_color_t resulting_back = back;
+    if (was_explored && !is_visible)
+    {
+        resulting_fore = TCOD_color_multiply_scalar(resulting_fore, 0.5f);
+        resulting_back = TCOD_color_multiply_scalar(resulting_back, 0.5f);
+    }
+
+    Vec2 screen_pos = apply_camera_to_position(pos);
+    TCOD_console_put_char_ex(g_console, screen_pos.x, screen_pos.y, symbol,
+                             resulting_fore, resulting_back);
+}
+
 static void draw_map()
 {
     for (int y = 0; y < MAP_HEIGHT; y++)
     {
         for (int x = 0; x < MAP_WIDTH; x++)
         {
-            Vec2 screen_pos = apply_camera_to_position(vec2(x, y));
-            TCOD_console_put_char_ex(
-                g_console, screen_pos.x, screen_pos.y, g_map->tiles[y][x].symbol,
-                g_map->tiles[y][x].fore_color, g_map->tiles[y][x].back_color);
+            Tile tile = g_map->tiles[y][x];
+            draw(tile.pos, tile.symbol, tile.fore_color, tile.back_color, tile.is_visible,
+                 tile.was_explored);
         }
     }
-}
-
-static void draw_actor(Actor* actor)
-{
-    Vec2 screen_pos = apply_camera_to_position(actor->pos);
-    // Use the actor's fore color, but the tile's back color.
-    TCOD_console_put_char_ex(g_console, screen_pos.x, screen_pos.y, actor->symbol,
-                             actor->color,
-                             g_map->tiles[actor->pos.y][actor->pos.x].back_color);
 }
 
 static void draw_actors()
@@ -78,8 +89,14 @@ static void draw_actors()
     Actor enemy;
     vec_foreach(&g_enemies, enemy, i)
     {
-        draw_actor(&enemy);
+        // Enemies are not drawn even if they're on an explored tile.
+        draw(enemy.pos, enemy.symbol, enemy.color,
+             g_map->tiles[enemy.pos.y][enemy.pos.x].back_color,
+             g_map->tiles[enemy.pos.y][enemy.pos.x].is_visible, false);
     }
+
+    draw(g_player.pos, g_player.symbol, g_player.color,
+         g_map->tiles[enemy.pos.y][enemy.pos.x].back_color, true, false);
 }
 
 /*************** CORE *****************/
@@ -90,7 +107,6 @@ static void render()
 
     draw_map();
     draw_actors();
-    draw_actor(&g_player);
 
     TCOD_context_present(g_context, g_console, NULL);
 }
@@ -185,6 +201,7 @@ void update()
 
         g_camera.target = g_player.pos;
 
+        map_update_fog_of_war(g_map, g_player.pos, PLAYER_VISION_RADIUS);
         clear_dead_enemies();
         render();
     }
