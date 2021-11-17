@@ -20,7 +20,6 @@ typedef vec_t(Actor) vec_actor_t;
 typedef vec_t(Actor*) vec_actor_ptr_t;
 
 void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir);
-void actor_draw(Actor* actor);
 void actor_attack(Actor* victim, Actor* attacker);
 
 void actor_on_event(Event* event);
