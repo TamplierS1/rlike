@@ -2,7 +2,7 @@
 #define MAP_H
 
 #define MAP_WIDTH 80
-#define MAP_HEIGHT 40
+#define MAP_HEIGHT 80
 
 #include <stdbool.h>
 
@@ -11,10 +11,16 @@
 #include "vec2.h"
 
 #define ROOM_DENSITY 70
-#define ROOM_SIZE_MIN vec2(9, 5)
-#define ROOM_SIZE_MAX vec2(19, 8)
+#define ROOM_SIZE_MIN vec2(7, 7)
+#define ROOM_SIZE_MAX vec2(20, 20)
 
 #define ENEMY_ROOMS 6
+
+typedef struct
+{
+    Vec2 target;
+    Vec2 offset;
+} Camera;
 
 typedef struct
 {
@@ -41,7 +47,6 @@ typedef struct
 // I can't include `actor.h` (it would cause a cyclic dependency),
 // so I have to use void* here.
 Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies);
-void map_draw(Map* map);
 void map_free(Map* map);
 
 bool map_check_bounds(Vec2 pos);

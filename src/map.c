@@ -1,5 +1,3 @@
-#include <ncurses.h>
-
 #include <stdlib.h>
 
 #include "map.h"
@@ -156,17 +154,6 @@ Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
     spawn_enemies(map, (vec_actor_t*)out_enemies);
 
     return map;
-}
-
-void map_draw(Map* map)
-{
-    for (int y = 0; y < MAP_HEIGHT; y++)
-    {
-        for (int x = 0; x < MAP_WIDTH; x++)
-        {
-            mvaddch(y, x, map->tiles[y][x].symbol);
-        }
-    }
 }
 
 void map_free(Map* map)

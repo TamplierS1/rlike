@@ -1,4 +1,4 @@
-#include "ncurses.h"
+#include <libtcod.h>
 
 #include "actor.h"
 
@@ -47,11 +47,6 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
     {
         actor->pos = vec2_sub(actor->pos, dir);
     }
-}
-
-void actor_draw(Actor* actor)
-{
-    mvaddch(actor->pos.y, actor->pos.x, actor->symbol);
 }
 
 void actor_attack(Actor* victim, Actor* attacker)
