@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "map.h"
 #include "symbols.h"
@@ -18,6 +19,9 @@ static void cast_ray(Map* map, Vec2 begin, Vec2 end)
     {
         if (end_ray)
             return;
+
+        if (!map_check_bounds(vec2(x0, y0)))
+            continue;
 
         if (map->tiles[y0][x0].symbol == WALL)
             end_ray = true;
@@ -113,7 +117,13 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         if (enemies_spawned >= ENEMY_ROOMS)
             return;
 
-        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, 30, 5, true};
+        char name_arr[7];
+        sprintf(name_arr, "Enemy%d", enemy_id);
+        vec_char_t name;
+        vec_init(&name);
+        vec_pusharr(&name, name_arr, 7);
+
+        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 5, true};
         vec_push(enemies, enemy);
         enemies_spawned++;
     }
@@ -222,6 +232,8 @@ void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
     {
         for (int y = pos.y - radius - 1; y <= pos.y + radius + 1; ++y)
         {
+            if (!map_check_bounds(vec2(x, y)))
+                continue;
             map->tiles[y][x].is_visible = false;
         }
     }

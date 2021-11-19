@@ -18,10 +18,11 @@
 static TCOD_Console* g_console;
 static TCOD_Tileset* g_tileset;
 static TCOD_Context* g_context;
+static bool g_quit = false;
 
 static Map* g_map = NULL;
 // The player always has `id` 0.
-static Actor g_player = {0, {0, 0}, PLAYER, PLAYER_COLOR, 100, 10, true};
+static Actor g_player;
 static vec_actor_t g_enemies;
 static Camera g_camera;
 
@@ -44,6 +45,8 @@ static void clear_dead_enemies()
     {
         if (!enemy.is_alive)
         {
+            Event event = {.type = EVENT_DEATH, &enemy};
+            event_send(&event);
             vec_swapsplice(&g_enemies, i, 1);
         }
     }
@@ -107,6 +110,7 @@ static void render()
 
     draw_map();
     draw_actors();
+    gui_render(g_console, &g_player);
 
     TCOD_context_present(g_context, g_console, NULL);
 }
@@ -135,6 +139,9 @@ static void handle_input(SDL_Keysym key)
             actor_move(g_map, &g_enemies, &g_player, vec2(1, 0));
             break;
         }
+        case SDLK_ESCAPE:
+            g_quit = true;
+            break;
         default:
             break;
     }
@@ -154,12 +161,12 @@ void init()
 
     const TCOD_ContextParams params = {.tcod_version = TCOD_COMPILEDVERSION,
                                        .renderer_type = TCOD_RENDERER_SDL2,
-                                       .pixel_width = 1920,
-                                       .pixel_height = 1080,
+                                       .pixel_width = SCREEN_WIDTH_PIX,
+                                       .pixel_height = SCREEN_HEIGHT_PIX,
                                        .tileset = g_tileset,
                                        .vsync = true,
                                        .sdl_window_flags = SDL_WINDOW_RESIZABLE,
-                                       .window_title = "rlike",
+                                       .window_title = TITLE,
                                        .argc = 0,
                                        .argv = NULL,
                                        .window_xy_defined = true,
@@ -167,7 +174,11 @@ void init()
     if (TCOD_context_new(&params, &g_context) < 0)
         fatal("Could not open context: %s", TCOD_get_error());
 
-    gui_init();
+    char name_arr[7] = "Player";
+    vec_char_t name;
+    vec_init(&name);
+    vec_pusharr(&name, name_arr, 7);
+    g_player = (Actor){0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 10, true};
 
     vec_init(&g_enemies);
     srand(time(NULL));
@@ -175,6 +186,7 @@ void init()
 
     event_system_init();
     event_subscribe(actor_on_event);
+    event_subscribe(gui_on_event);
 
     g_camera.target = g_player.pos;
     g_camera.offset = vec2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
@@ -182,19 +194,23 @@ void init()
 
 void update()
 {
-    bool quit = false;
-    while (!quit)
+    while (!g_quit)
     {
         SDL_Event event;
-        while (SDL_PollEvent(&event))
+        // This helps with debugging.
+        while (SDL_PollEvent(&event) /*&& SDL_GetMouseFocus() != NULL*/)
         {
             switch (event.type)
             {
                 case SDL_KEYDOWN:
-                    handle_input(event.key.keysym);
+                {
+                    bool was_key_used = gui_handle_input(event.key.keysym);
+                    if (!was_key_used)
+                        handle_input(event.key.keysym);
                     break;
+                }
                 case SDL_QUIT:
-                    quit = true;
+                    g_quit = true;
                     break;
             }
         }
@@ -209,6 +225,11 @@ void update()
 
 void end()
 {
+    for (int i = 0; i < g_enemies.length; i++)
+    {
+        vec_deinit(&g_enemies.data[i].name);
+    }
+
     vec_deinit(&g_enemies);
     event_system_deinit();
     map_free(g_map);
