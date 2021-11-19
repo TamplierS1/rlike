@@ -7,7 +7,9 @@ typedef enum
     // The first actor is a victim of an attack.
     // The second actor is the attacker.
     // Check `actor_on_event` for an example.
-    EVENT_ATTACK
+    EVENT_ATTACK,
+    // 'data' contains the dead actor.
+    EVENT_DEATH,
 } EventType;
 
 typedef struct

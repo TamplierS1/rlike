@@ -23,6 +23,11 @@ static Actor* check_collision(Actor* actor, vec_actor_t* enemies)
     return NULL;
 }
 
+void actor_free(Actor* actor)
+{
+    vec_deinit(&actor->name);
+}
+
 void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 {
     actor->pos = vec2_add(actor->pos, dir);
@@ -69,5 +74,7 @@ void actor_on_event(Event* event)
             actor_attack(victim, attacker);
             break;
         }
+        default:
+            break;
     }
 }

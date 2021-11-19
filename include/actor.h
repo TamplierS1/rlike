@@ -10,6 +10,7 @@ typedef struct
     Vec2 pos;
     char symbol;
     TCOD_color_t color;
+    vec_char_t name;
 
     int hp;
     int dmg;
@@ -19,6 +20,8 @@ typedef struct
 
 typedef vec_t(Actor) vec_actor_t;
 typedef vec_t(Actor*) vec_actor_ptr_t;
+
+void actor_free(Actor* actor);
 
 void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir);
 void actor_attack(Actor* victim, Actor* attacker);
