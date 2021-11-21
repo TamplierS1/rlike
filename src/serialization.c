@@ -5,12 +5,13 @@
 #include "serialization.h"
 #include "error.h"
 
-static char* read_json_from_file(const char* path)
+static char* read_json_from_file(const char* path, Error* out_err)
 {
     FILE* file = fopen(path, "rb");
     if (file == NULL)
     {
-        fatal("Failed to open file %s\n", path);
+        *out_err = ERROR_FILE_IO;
+        error(__FILE__, __func__, __LINE__, "failed to open file %s", path);
         return NULL;
     }
 
@@ -23,7 +24,8 @@ static char* read_json_from_file(const char* path)
     if (fread(buffer, sizeof(char), length, file) != length)
     {
         free(buffer);
-        fatal("Failed to read the contents of %s\n", path);
+        *out_err = ERROR_FILE_IO;
+        error(__FILE__, __func__, __LINE__, "failed to read the contents of %s", path);
         return NULL;
     }
 
@@ -33,24 +35,24 @@ static char* read_json_from_file(const char* path)
     return buffer;
 }
 
-static bool write_json_to_file(const char* path, struct json_object* object,
-                               const char* mode)
+static Error write_json_to_file(const char* path, struct json_object* object,
+                                const char* mode)
 {
     FILE* file = fopen(path, mode);
     if (file == NULL)
     {
-        fatal("Filed to serialize to %s", path);
-        return false;
+        error(__FILE__, __func__, __LINE__, "failed to serialize to %s", path);
+        return ERROR_FILE_IO;
     }
 
     fprintf(file, "%s", json_object_get_string(object));
 
     fclose(file);
-    return true;
+    return OK;
 }
 
-static bool get_jobject_from_jstring(const char* json_string,
-                                     struct json_object** out_jobject)
+static Error get_jobject_from_jstring(const char* json_string,
+                                      struct json_object** out_jobject)
 {
     struct json_tokener* tokener = json_tokener_new();
 
@@ -59,16 +61,18 @@ static bool get_jobject_from_jstring(const char* json_string,
     enum json_tokener_error err = json_tokener_get_error(tokener);
     if (jobject == NULL && err != json_tokener_continue)
     {
-        fatal("Failed to parse json when parsing an object: %s.\n",
+        error(__FILE__, __func__, __LINE__,
+              "failed to parse json when parsing an "
+              "object - %s",
               json_tokener_error_desc(err));
         json_tokener_free(tokener);
-        return false;
+        return ERROR_JSON_PARSING;
     }
     json_tokener_free(tokener);
 
     *out_jobject = jobject;
 
-    return true;
+    return OK;
 }
 
 static bool deserialize_int(struct json_object* parent, const char* name, int* out_x)
@@ -313,37 +317,72 @@ static struct json_object* serialize_map(Map* map)
     return jmap;
 }
 
-bool srz_load_map(const char* path, Map* out_map)
+Error srz_load_map(const char* path, Map* out_map)
 {
     struct json_object* jmap;
-    char* json_string = read_json_from_file(path);
-    if (!get_jobject_from_jstring(json_string, &jmap))
-        return false;
+
+    Error err = OK;
+    char* json_string = read_json_from_file(path, &err);
+    if (err != OK)
+    {
+        return err;
+    }
+    if (get_jobject_from_jstring(json_string, &jmap) != OK)
+    {
+        free(json_string);
+        return err;
+    }
 
     free(json_string);
-
-    return deserialize_map(jmap, out_map);
+    if (!deserialize_map(jmap, out_map))
+    {
+        error(__FILE__, __func__, __LINE__, "failed to load the map from %s", path);
+        return ERROR_JSON_DESERIALIZE;
+    }
+    return OK;
 }
 
-bool srz_load_player(const char* path, Actor* out_actor)
+Error srz_load_player(const char* path, Actor* out_actor)
 {
     struct json_object* jactor;
-    char* json_string = read_json_from_file(path);
-    if (!get_jobject_from_jstring(read_json_from_file(path), &jactor))
-        return false;
 
+    Error err = OK;
+    char* json_string = read_json_from_file(path, &err);
+    if (err != OK)
+    {
+        return err;
+    }
+    if (get_jobject_from_jstring(json_string, &jactor) != OK)
+    {
+        free(json_string);
+        return err;
+    }
     // json_string is allocated in `read_json_from_file`.
     free(json_string);
 
-    return deserialize_actor(jactor, out_actor);
+    if (!deserialize_actor(jactor, out_actor))
+    {
+        error(__FILE__, __func__, __LINE__, "failed to load the actor from %s", path);
+        return ERROR_JSON_DESERIALIZE;
+    }
+    return OK;
 }
 
-bool srz_load_enemies(const char* path, vec_actor_t* out_enemies)
+Error srz_load_enemies(const char* path, vec_actor_t* out_enemies)
 {
     struct json_object* jenemies;
-    char* json_string = read_json_from_file(path);
-    if (!get_jobject_from_jstring(json_string, &jenemies))
-        return false;
+
+    Error err = OK;
+    char* json_string = read_json_from_file(path, &err);
+    if (err != OK)
+    {
+        return err;
+    }
+    if (get_jobject_from_jstring(json_string, &jenemies) != OK)
+    {
+        free(json_string);
+        return err;
+    }
 
     vec_init(out_enemies);
     for (size_t i = 0; i < json_object_array_length(jenemies); i++)
@@ -352,7 +391,11 @@ bool srz_load_enemies(const char* path, vec_actor_t* out_enemies)
 
         Actor enemy;
         if (!deserialize_actor(jenemy, &enemy))
-            return false;
+        {
+            error(__FILE__, __func__, __LINE__, "failed to load the enemies from %s",
+                  path);
+            return ERROR_JSON_DESERIALIZE;
+        }
 
         vec_push(out_enemies, enemy);
     }
@@ -360,39 +403,35 @@ bool srz_load_enemies(const char* path, vec_actor_t* out_enemies)
     // json_string is allocated in `read_json_from_file`.
     free(json_string);
 
-    return true;
+    return OK;
 }
 
-bool srz_save_map(Map* map, const char* path)
+Error srz_save_map(Map* map, const char* path)
 {
     struct json_object* jmap = serialize_map(map);
-    bool result = write_json_to_file(path, jmap, "w");
-
-    return result;
+    return write_json_to_file(path, jmap, "w");
 }
 
-bool srz_save_player(Actor* player, const char* path)
+Error srz_save_player(Actor* player, const char* path)
 {
     struct json_object* jplayer = serialize_actor(player);
-    bool result = write_json_to_file(path, jplayer, "w");
-
-    return result;
+    return write_json_to_file(path, jplayer, "w");
 }
 
-bool srz_save_enemies(const vec_actor_t* enemies, const char* path)
+Error srz_save_enemies(const vec_actor_t* enemies, const char* path)
 {
     struct json_object* jenemies = json_object_new_array();
     for (int i = 0; i < enemies->length; i++)
     {
         struct json_object* jenemy = serialize_actor(&enemies->data[i]);
-        // TODO: add some error handling.
         if (jenemy == NULL)
+        {
+            error(__FILE__, __func__, __LINE__, "failed to save the enemies to %s", path);
             continue;
+        }
 
         json_object_array_add(jenemies, jenemy);
     }
 
-    bool result = write_json_to_file(path, jenemies, "w");
-
-    return result;
+    return write_json_to_file(path, jenemies, "w");
 }
