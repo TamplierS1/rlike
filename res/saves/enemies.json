@@ -1,1 +1,0 @@
-[ { "id": 5, "pos": { "x": 62, "y": 22 }, "symbol": 37, "color": { "r": 137, "g": 29, "b": 29 }, "name": "Enemy5", "hp": 30, "dmg": 5, "is_alive": true }, { "id": 3, "pos": { "x": 71, "y": 72 }, "symbol": 37, "color": { "r": 137, "g": 29, "b": 29 }, "name": "Enemy3", "hp": 30, "dmg": 5, "is_alive": true } ]
