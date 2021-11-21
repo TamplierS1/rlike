@@ -1,0 +1,15 @@
+#ifndef SERIALIZE_H
+#define  SERIALIZE_H
+
+#include "map.h"
+#include "actor.h"
+
+bool srz_load_map(const char* path, Map* out_map);
+bool srz_load_player(const char* path, Actor* out_actor);
+bool srz_load_enemies(const char* path, vec_actor_t* out_enemies);
+
+bool srz_save_map(Map* map, const char* path);
+bool srz_save_player(Actor* player, const char* path);
+bool srz_save_enemies(const vec_actor_t* enemies, const char* path);
+
+#endif // SERIALIZE_H

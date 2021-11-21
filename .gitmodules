@@ -1,4 +1,6 @@
 [submodule "third_party/libtcod"]
 	path = third_party/libtcod
 	url = git@github.com:libtcod/libtcod.git
-	ignore = dirty
+[submodule "third_party/json-c"]
+	path = third_party/json-c
+	url = https://github.com/json-c/json-c.git

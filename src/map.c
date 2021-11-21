@@ -5,47 +5,6 @@
 #include "symbols.h"
 #include "actor.h"
 
-static void cast_ray(Map* map, Vec2 begin, Vec2 end)
-{
-    int x0 = begin.x, y0 = begin.y;
-    int x1 = end.x, y1 = end.y;
-
-    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-    int err = dx + dy, e2;
-
-    bool end_ray = false;
-    for (;;)
-    {
-        if (end_ray)
-            return;
-
-        if (!map_check_bounds(vec2(x0, y0)))
-            continue;
-
-        if (map->tiles[y0][x0].symbol == WALL)
-            end_ray = true;
-
-        map->tiles[y0][x0].is_visible = true;
-        map->tiles[y0][x0].was_explored = true;
-
-        if (x0 == x1 && y0 == y1)
-            break;
-
-        e2 = 2 * err;
-        if (e2 >= dy)
-        {
-            err += dy;
-            x0 += sx;
-        }
-        if (e2 <= dx)
-        {
-            err += dx;
-            y0 += sy;
-        }
-    }
-}
-
 static int rand_int(int min, int max)
 {
     int result = rand() % max;
@@ -57,48 +16,17 @@ static int rand_int(int min, int max)
 
 static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
 {
-    if (!map_check_bounds(end))
+    if (!map_check_bounds(map, end))
         return false;
 
     for (int y = begin.y; y < end.y; y++)
     {
         for (int x = begin.x; x < end.x; x++)
         {
-            if (map->tiles[y][x].symbol != WALL)
+            if (map_tile(map, vec2(x, y))->symbol != WALL)
             {
                 return false;
             }
-        }
-    }
-
-    return true;
-}
-
-static void dig(Map* map, Vec2 pos)
-{
-    map->tiles[pos.y][pos.x] = (Tile){.pos = pos,
-                                      .symbol = FLOOR,
-                                      .is_walkable = true,
-                                      .is_visible = false,
-                                      .was_explored = false,
-                                      .back_color = FLOOR_BACK_COLOR,
-                                      .fore_color = FLOOR_FORE_COLOR};
-}
-
-static bool dig_room(Map* map, Vec2 pos, Vec2 size)
-{
-    if (!map_check_bounds(pos) || !map_check_bounds(vec2_add(pos, size)))
-    {
-        return false;
-    }
-
-    // A room's position is at its upper-left corner.
-    // So we +1 the position to not dig this corner.
-    for (int y = pos.y + 1; y < pos.y + size.y; y++)
-    {
-        for (int x = pos.x + 1; x < pos.x + size.x; x++)
-        {
-            dig(map, vec2(x, y));
         }
     }
 
@@ -114,7 +42,7 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
     Room room;
     vec_foreach(&map->rooms, room, j)
     {
-        if (enemies_spawned >= ENEMY_ROOMS)
+        if (enemies_spawned >= map->num_enemies)
             return;
 
         char name_arr[7];
@@ -131,11 +59,11 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
 
 static void fill_map_with_walls(Map* map)
 {
-    for (int y = 0; y < MAP_HEIGHT; y++)
+    for (int y = 0; y < map->size.y; y++)
     {
-        for (int x = 0; x < MAP_WIDTH; x++)
+        for (int x = 0; x < map->size.x; x++)
         {
-            map->tiles[y][x] = (Tile){
+            Tile tile = (Tile){
                 .pos = vec2(x, y),
                 .symbol = WALL,
                 .is_walkable = false,
@@ -144,8 +72,40 @@ static void fill_map_with_walls(Map* map)
                 .back_color = WALL_BACK_COLOR,
                 .fore_color = WALL_FORE_COLOR,
             };
+            vec_push(&map->tiles, tile);
         }
     }
+}
+
+static void dig(Map* map, Vec2 pos)
+{
+    *map_tile(map, pos) = (Tile){.pos = pos,
+                                 .symbol = FLOOR,
+                                 .is_walkable = true,
+                                 .is_visible = false,
+                                 .was_explored = false,
+                                 .back_color = FLOOR_BACK_COLOR,
+                                 .fore_color = FLOOR_FORE_COLOR};
+}
+
+static bool dig_room(Map* map, Vec2 pos, Vec2 size)
+{
+    if (!map_check_bounds(map, pos) || !map_check_bounds(map, vec2_add(pos, size)))
+    {
+        return false;
+    }
+
+    // A room's position is at its upper-left corner.
+    // So we +1 the position to not dig this corner.
+    for (int y = pos.y + 1; y < pos.y + size.y; y++)
+    {
+        for (int x = pos.x + 1; x < pos.x + size.x; x++)
+        {
+            dig(map, vec2(x, y));
+        }
+    }
+
+    return true;
 }
 
 static void connect_rooms(Map* map, Vec2 center1, Vec2 center2)
@@ -175,11 +135,11 @@ static void connect_rooms(Map* map, Vec2 center1, Vec2 center2)
 static Vec2 dig_rooms(Map* map)
 {
     Vec2 spawn_pos = vec2(0, 0);
-    for (int i = 0; i < ROOM_DENSITY; i++)
+    for (int i = 0; i < map->room_density; i++)
     {
-        Vec2 pos = vec2(rand_int(1, MAP_WIDTH), rand_int(1, MAP_HEIGHT));
-        Vec2 size = vec2(rand_int(ROOM_SIZE_MIN.x, ROOM_SIZE_MAX.x),
-                         rand_int(ROOM_SIZE_MIN.y, ROOM_SIZE_MAX.y));
+        Vec2 pos = vec2(rand_int(1, map->size.x), rand_int(1, map->size.y));
+        Vec2 size = vec2(rand_int(map->room_size_min.x, map->room_size_max.x),
+                         rand_int(map->room_size_min.y, map->room_size_max.y));
 
         if (!is_area_available(map, pos, vec2_add(pos, vec2_add_int(size, 1))))
         {
@@ -207,6 +167,13 @@ Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
 {
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
+    vec_init(&map->tiles);
+    map->size = vec2(80, 80);
+    map->room_density = 70;
+    map->room_size_min = vec2(7, 7);
+    map->room_size_max = vec2(20, 20);
+    map->num_enemies = 6;
+    vec_reserve(&map->tiles, map->size.x * map->size.y);
 
     fill_map_with_walls(map);
     *out_rogue_start_pos = dig_rooms(map);
@@ -218,8 +185,52 @@ Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
 void map_free(Map* map)
 {
     vec_deinit(&map->rooms);
+    vec_deinit(&map->tiles);
     free(map);
     map = NULL;
+}
+
+static void cast_ray(Map* map, Vec2 begin, Vec2 end)
+{
+    int x0 = begin.x, y0 = begin.y;
+    int x1 = end.x, y1 = end.y;
+
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    bool end_ray = false;
+    for (;;)
+    {
+        if (end_ray)
+            return;
+
+        // TODO: this check causes the game to freeze
+        // when x0, y0 are out of bounds.
+        if (!map_check_bounds(map, vec2(x0, y0)))
+            continue;
+
+        if (map_tile(map, vec2(x0, y0))->symbol == WALL)
+            end_ray = true;
+
+        map_tile(map, vec2(x0, y0))->is_visible = true;
+        map_tile(map, vec2(x0, y0))->was_explored = true;
+
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        e2 = 2 * err;
+        if (e2 >= dy)
+        {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx)
+        {
+            err += dx;
+            y0 += sy;
+        }
+    }
 }
 
 void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
@@ -232,9 +243,9 @@ void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
     {
         for (int y = pos.y - radius - 1; y <= pos.y + radius + 1; ++y)
         {
-            if (!map_check_bounds(vec2(x, y)))
+            if (!map_check_bounds(map, vec2(x, y)))
                 continue;
-            map->tiles[y][x].is_visible = false;
+            map_tile(map, vec2(x, y))->is_visible = false;
         }
     }
 
@@ -253,12 +264,17 @@ void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
     }
 }
 
-bool map_check_bounds(Vec2 pos)
+bool map_check_bounds(Map* map, Vec2 pos)
 {
-    return pos.x >= 0 && pos.y >= 0 && pos.x < MAP_WIDTH && pos.y < MAP_HEIGHT;
+    return pos.x >= 0 && pos.y >= 0 && pos.x < map->size.x && pos.y < map->size.y;
 }
 
 bool map_is_walkable(Map* map, Vec2 pos)
 {
-    return map->tiles[pos.y][pos.x].is_walkable;
+    return map_tile(map, pos)->is_walkable;
+}
+
+Tile* map_tile(Map* map, Vec2 pos)
+{
+    return &map->tiles.data[pos.x + pos.y * map->size.x];
 }
