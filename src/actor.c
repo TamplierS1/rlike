@@ -48,7 +48,7 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
         actor->pos = vec2_sub(actor->pos, dir);
     }
 
-    if (!map_check_bounds(actor->pos) || !map_is_walkable(map, actor->pos))
+    if (!map_check_bounds(map, actor->pos) || !map_is_walkable(map, actor->pos))
     {
         actor->pos = vec2_sub(actor->pos, dir);
     }

@@ -12,6 +12,7 @@ add_executable(rlike "")
 add_subdirectory(src)
 add_subdirectory(third_party/libtcod)
 add_subdirectory(third_party/sdl2)
+add_subdirectory(third_party/json-c)
 
 set(C_COMPILE_FLAGS)
 set(C_LINK_FLAGS)
@@ -26,13 +27,16 @@ set(C_LINK_LIBS)
 list(APPEND C_INCLUDE_DIRS
         "include"
         "third_party/libtcod/src"
-        "third_party/sdl2/include")
+        "third_party/sdl2/include"
+        "third_party/json-c/build")
 
 list(APPEND C_LINK_OPTIONS PRIVATE
-        -L "third_party/sdl2/build")
+        -L"third_party/sdl2/build"
+        -L"third_party/libtcod/build/lib"
+        -L"third_party/json-c/build")
 
 list(APPEND C_LINK_LIBS PRIVATE
-        libtcod::libtcod SDL2-2.0)
+        libtcod::libtcod SDL2-2.0 json-c)
 
 target_compile_options(rlike PRIVATE ${C_COMPILE_FLAGS})
 target_include_directories(rlike PRIVATE SYSTEM

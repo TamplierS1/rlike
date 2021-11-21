@@ -12,6 +12,7 @@
 #include "event.h"
 #include "gui.h"
 #include "error.h"
+#include "serialization.h"
 
 #define PLAYER_VISION_RADIUS 12
 
@@ -75,13 +76,13 @@ static void draw(Vec2 pos, char symbol, TCOD_color_t fore, TCOD_color_t back,
 
 static void draw_map()
 {
-    for (int y = 0; y < MAP_HEIGHT; y++)
+    for (int x = 0; x < g_map->size.x; x++)
     {
-        for (int x = 0; x < MAP_WIDTH; x++)
+        for (int y = 0; y < g_map->size.y; y++)
         {
-            Tile tile = g_map->tiles[y][x];
-            draw(tile.pos, tile.symbol, tile.fore_color, tile.back_color, tile.is_visible,
-                 tile.was_explored);
+            Tile* tile = map_tile(g_map, vec2(x, y));
+            draw(tile->pos, tile->symbol, tile->fore_color, tile->back_color,
+                 tile->is_visible, tile->was_explored);
         }
     }
 }
@@ -93,13 +94,15 @@ static void draw_actors()
     vec_foreach(&g_enemies, enemy, i)
     {
         // Enemies are not drawn even if they're on an explored tile.
-        draw(enemy.pos, enemy.symbol, enemy.color,
-             g_map->tiles[enemy.pos.y][enemy.pos.x].back_color,
-             g_map->tiles[enemy.pos.y][enemy.pos.x].is_visible, false);
+        draw(enemy.pos, enemy.symbol, enemy.color, map_tile(g_map, enemy.pos)->back_color,
+             map_tile(g_map, enemy.pos)->is_visible, false);
+        // Useful for debugging:
+        //        draw(enemy.pos, enemy.symbol, enemy.color,
+        //             map_tile(g_map, enemy.pos)->back_color, true, true);
     }
 
     draw(g_player.pos, g_player.symbol, g_player.color,
-         g_map->tiles[enemy.pos.y][enemy.pos.x].back_color, true, false);
+         map_tile(g_map, g_player.pos)->back_color, true, false);
 }
 
 /*************** CORE *****************/
@@ -174,15 +177,18 @@ void init()
     if (TCOD_context_new(&params, &g_context) < 0)
         fatal("Could not open context: %s", TCOD_get_error());
 
-    char name_arr[7] = "Player";
-    vec_char_t name;
-    vec_init(&name);
-    vec_pusharr(&name, name_arr, 7);
-    g_player = (Actor){0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 10, true};
-
-    vec_init(&g_enemies);
     srand(time(NULL));
-    g_map = map_generate(&g_player.pos, &g_enemies);
+
+    g_map = malloc(sizeof(Map));
+    vec_init(&g_map->rooms);
+    vec_init(&g_map->tiles);
+
+    if (!srz_load_map("res/saves/map.json", g_map))
+        fatal("Failed to load the map.\n");
+    if (!srz_load_player("res/saves/player.json", &g_player))
+        fatal("Failed to load the player.\n");
+    if (!srz_load_enemies("res/saves/enemies.json", &g_enemies))
+        fatal("Failed to load the enemies.\n");
 
     event_system_init();
     event_subscribe(actor_on_event);
@@ -225,6 +231,10 @@ void update()
 
 void end()
 {
+    srz_save_map(g_map, "res/saves/map.json");
+    srz_save_enemies(&g_enemies, "res/saves/enemies.json");
+    srz_save_player(&g_player, "res/saves/player.json");
+
     for (int i = 0; i < g_enemies.length; i++)
     {
         vec_deinit(&g_enemies.data[i].name);

@@ -1,21 +1,12 @@
 #ifndef MAP_H
 #define MAP_H
 
-#define MAP_WIDTH 80
-#define MAP_HEIGHT 80
-
 #include <stdbool.h>
 
 #include "vec.h"
 #include <libtcod.h>
 
 #include "vec2.h"
-
-#define ROOM_DENSITY 70
-#define ROOM_SIZE_MIN vec2(7, 7)
-#define ROOM_SIZE_MAX vec2(20, 20)
-
-#define ENEMY_ROOMS 6
 
 typedef struct
 {
@@ -42,11 +33,17 @@ typedef struct
 } Room;
 
 typedef vec_t(Room) vec_room_t;
+typedef vec_t(Tile) vec_tile_t;
 
 typedef struct
 {
-    Tile tiles[MAP_HEIGHT][MAP_WIDTH];
+    vec_tile_t tiles;
     vec_room_t rooms;
+    Vec2 size;
+    int room_density;
+    Vec2 room_size_min;
+    Vec2 room_size_max;
+    int num_enemies;
 } Map;
 
 // I can't include `actor.h` (it would cause a cyclic dependency),
@@ -55,7 +52,8 @@ Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies);
 void map_free(Map* map);
 
 void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius);
-bool map_check_bounds(Vec2 pos);
+bool map_check_bounds(Map* map, Vec2 pos);
 bool map_is_walkable(Map* map, Vec2 pos);
+Tile* map_tile(Map* map, Vec2 pos);
 
 #endif  // MAP_H
