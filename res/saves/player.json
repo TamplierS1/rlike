@@ -1,1 +1,0 @@
-{ "id": 0, "pos": { "x": 69, "y": 9 }, "symbol": 64, "color": { "r": 204, "g": 194, "b": 184 }, "name": "Player", "hp": 100, "dmg": 10, "is_alive": true }

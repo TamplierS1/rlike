@@ -27,6 +27,28 @@ static Actor g_player;
 static vec_actor_t g_enemies;
 static Camera g_camera;
 
+/*********** SAVING ***************/
+static bool load_map()
+{
+    if (srz_load_map("res/saves/map.json", g_map) != OK ||
+        srz_load_player("res/saves/player.json", &g_player) != OK ||
+        srz_load_enemies("res/saves/enemies.json", &g_enemies) != OK)
+        return false;
+    return true;
+}
+
+static void generate_map()
+{
+    char name_arr[7] = "Player";
+    vec_char_t name;
+    vec_init(&name);
+    vec_pusharr(&name, name_arr, 7);
+    g_player = (Actor){0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 10, true};
+
+    vec_init(&g_enemies);
+    g_map = map_generate(&g_player.pos, &g_enemies);
+}
+
 /*********** UTILITY ***************/
 
 // Changes and returns `pos` in relation to the camera.
@@ -156,11 +178,13 @@ void init()
 
     g_console = TCOD_console_new(SCREEN_WIDTH, SCREEN_HEIGHT);
     if (!g_console)
-        fatal("Could not open console: %s", TCOD_get_error());
+        fatal(__FILE__, __func__, __LINE__, "Could not open console: %s",
+              TCOD_get_error());
 
     g_tileset = TCOD_tileset_load("res/tileset.png", 16, 16, 256, TCOD_CHARMAP_CP437);
     if (!g_tileset)
-        fatal("Failed to load tileset: %s", TCOD_get_error());
+        fatal(__FILE__, __func__, __LINE__, "Failed to load tileset: %s",
+              TCOD_get_error());
 
     const TCOD_ContextParams params = {.tcod_version = TCOD_COMPILEDVERSION,
                                        .renderer_type = TCOD_RENDERER_SDL2,
@@ -175,7 +199,8 @@ void init()
                                        .window_xy_defined = true,
                                        .console = g_console};
     if (TCOD_context_new(&params, &g_context) < 0)
-        fatal("Could not open context: %s", TCOD_get_error());
+        fatal(__FILE__, __func__, __LINE__, "Could not open context: %s",
+              TCOD_get_error());
 
     srand(time(NULL));
 
@@ -183,12 +208,10 @@ void init()
     vec_init(&g_map->rooms);
     vec_init(&g_map->tiles);
 
-    if (!srz_load_map("res/saves/map.json", g_map))
-        fatal("Failed to load the map.\n");
-    if (!srz_load_player("res/saves/player.json", &g_player))
-        fatal("Failed to load the player.\n");
-    if (!srz_load_enemies("res/saves/enemies.json", &g_enemies))
-        fatal("Failed to load the enemies.\n");
+    if (!load_map())
+    {
+        generate_map();
+    }
 
     event_system_init();
     event_subscribe(actor_on_event);
