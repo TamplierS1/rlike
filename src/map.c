@@ -127,7 +127,10 @@ static void connect_rooms(Map* map, Vec2 center1, Vec2 center2)
         else
             break;
 
-        dig(map, temp);
+        if (map_check_bounds(map, temp))
+        {
+            dig(map, temp);
+        }
     }
 }
 
@@ -205,16 +208,14 @@ static void cast_ray(Map* map, Vec2 begin, Vec2 end)
         if (end_ray)
             return;
 
-        // TODO: this check causes the game to freeze
-        // when x0, y0 are out of bounds.
-        if (!map_check_bounds(map, vec2(x0, y0)))
-            continue;
+        if (map_check_bounds(map, vec2(x0, y0)))
+        {
+            if (map_tile(map, vec2(x0, y0))->symbol == WALL)
+                end_ray = true;
 
-        if (map_tile(map, vec2(x0, y0))->symbol == WALL)
-            end_ray = true;
-
-        map_tile(map, vec2(x0, y0))->is_visible = true;
-        map_tile(map, vec2(x0, y0))->was_explored = true;
+            map_tile(map, vec2(x0, y0))->is_visible = true;
+            map_tile(map, vec2(x0, y0))->was_explored = true;
+        }
 
         if (x0 == x1 && y0 == y1)
             break;
@@ -266,7 +267,7 @@ void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
 
 bool map_check_bounds(Map* map, Vec2 pos)
 {
-    return pos.x >= 0 && pos.y >= 0 && pos.x < map->size.x && pos.y < map->size.y;
+    return pos.x > 0 && pos.y > 0 && pos.x < map->size.x && pos.y < map->size.y;
 }
 
 bool map_is_walkable(Map* map, Vec2 pos)
