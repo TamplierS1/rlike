@@ -2,25 +2,22 @@
 
 #include "actor.h"
 
-// Returns the enemy the `actor` collided with.
-// If there was no collisions returns NULL.
-static Actor* check_collision(Actor* actor, vec_actor_t* enemies)
+static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies, Vec2 dir)
 {
-    int i;
-    Actor* enemy;
-    vec_foreach_ptr(enemies, enemy, i)
+    if (!map_check_bounds(map, actor->pos) || !map_is_walkable(map, actor->pos))
+        return true;
+
+    for (int i = 0; i < enemies->length; ++i)
     {
         // We shouldn't check for collisions against the same actor.
-        if (enemy->id != actor->id)
+        if (enemies->data[i].id != actor->id)
         {
-            if (vec2_equals(enemy->pos, actor->pos))
-            {
-                return enemy;
-            }
+            if (vec2_equals(enemies->data[i].pos, actor->pos))
+                return true;
         }
     }
 
-    return NULL;
+    return false;
 }
 
 void actor_free(Actor* actor)
@@ -32,23 +29,7 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 {
     actor->pos = vec2_add(actor->pos, dir);
 
-    Actor* victim = check_collision(actor, enemies);
-    if (victim != NULL)
-    {
-        vec_actor_ptr_t collided_actors;
-        vec_init(&collided_actors);
-        vec_push(&collided_actors, victim);
-        vec_push(&collided_actors, actor);
-
-        Event event = {EVENT_ATTACK, &collided_actors};
-        event_send(&event);
-
-        vec_deinit(&collided_actors);
-
-        actor->pos = vec2_sub(actor->pos, dir);
-    }
-
-    if (!map_check_bounds(map, actor->pos) || !map_is_walkable(map, actor->pos))
+    if (check_collision(map, actor, enemies, dir))
     {
         actor->pos = vec2_sub(actor->pos, dir);
     }
@@ -67,11 +48,8 @@ void actor_on_event(Event* event)
     {
         case EVENT_ATTACK:
         {
-            vec_actor_ptr_t* collided_actors = (vec_actor_ptr_t*)(event->data);
-            Actor* victim = collided_actors->data[0];
-            Actor* attacker = collided_actors->data[1];
-
-            actor_attack(victim, attacker);
+            EventAttack* event_attack = (EventAttack*)(event->data);
+            actor_attack(event_attack->victim, event_attack->attacker);
             break;
         }
         default:

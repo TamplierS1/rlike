@@ -18,6 +18,17 @@ typedef struct
     bool is_alive;
 } Actor;
 
+typedef struct
+{
+    Actor* attacker;
+    Actor* victim;
+} EventAttack;
+
+typedef struct
+{
+    Actor* dead_actor;
+} EventDeath;
+
 typedef vec_t(Actor) vec_actor_t;
 typedef vec_t(Actor*) vec_actor_ptr_t;
 

@@ -51,11 +51,11 @@ void gui_on_event(Event* event)
     {
         case EVENT_ATTACK:
         {
-            vec_actor_ptr_t* collided_actors = (vec_actor_ptr_t*)(event->data);
+            EventAttack* event_attack = (EventAttack*)(event->data);
             // If the player is the attacker.
-            if (collided_actors->data[1]->id == 0)
+            if (event_attack->attacker->id == 0)
             {
-                g_engaged_enemy = collided_actors->data[0];
+                g_engaged_enemy = event_attack->victim;
                 g_is_enemy_alive = true;
             }
 
@@ -63,11 +63,9 @@ void gui_on_event(Event* event)
         }
         case EVENT_DEATH:
         {
-            Actor* dead_actor = (Actor*)(event->data);
-            if (dead_actor->id == g_engaged_enemy->id)
-            {
+            EventDeath* event_death = (EventDeath*)(event->data);
+            if (event_death->dead_actor->id == g_engaged_enemy->id)
                 g_is_enemy_alive = false;
-            }
             break;
         }
     }

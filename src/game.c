@@ -51,6 +51,19 @@ static void generate_map()
 
 /*********** UTILITY ***************/
 
+// returns NULL if no enemy was found at position `pos`.
+static Actor* find_enemy_at(Vec2 pos)
+{
+    for (int i = 0; i < g_enemies.length; i++)
+    {
+        if (vec2_equals(g_enemies.data[i].pos, pos))
+        {
+            return &g_enemies.data[i];
+        }
+    }
+    return NULL;
+}
+
 // Changes and returns `pos` in relation to the camera.
 static Vec2 apply_camera_to_position(Vec2 pos)
 {
@@ -60,6 +73,25 @@ static Vec2 apply_camera_to_position(Vec2 pos)
 
 /*********** GAMEPLAY **************/
 
+static void player_attack_or_move(SDL_Keycode prev_key, Vec2 dir)
+{
+    if (prev_key == SDLK_b)
+    {
+        Vec2 enemy_pos = vec2(g_player.pos.x + dir.x, g_player.pos.y + dir.y);
+        Actor* enemy = find_enemy_at(enemy_pos);
+        if (enemy == NULL)
+            return;
+
+        EventAttack attack = {&g_player, enemy};
+        Event event = {EVENT_ATTACK, &attack};
+        event_send(&event);
+    }
+    else
+    {
+        actor_move(g_map, &g_enemies, &g_player, dir);
+    }
+}
+
 static void clear_dead_enemies()
 {
     int i;
@@ -68,7 +100,8 @@ static void clear_dead_enemies()
     {
         if (!enemy.is_alive)
         {
-            Event event = {.type = EVENT_DEATH, &enemy};
+            EventDeath event_death = {&enemy};
+            Event event = {EVENT_DEATH, &event_death};
             event_send(&event);
             vec_swapsplice(&g_enemies, i, 1);
         }
@@ -142,26 +175,27 @@ static void render()
 
 static void handle_input(SDL_Keysym key)
 {
+    static SDL_Keycode prev_key = SDLK_ESCAPE;
     switch (key.sym)
     {
         case SDLK_w:
         {
-            actor_move(g_map, &g_enemies, &g_player, vec2(0, -1));
+            player_attack_or_move(prev_key, vec2(0, -1));
             break;
         }
         case SDLK_s:
         {
-            actor_move(g_map, &g_enemies, &g_player, vec2(0, 1));
+            player_attack_or_move(prev_key, vec2(0, 1));
             break;
         }
         case SDLK_a:
         {
-            actor_move(g_map, &g_enemies, &g_player, vec2(-1, 0));
+            player_attack_or_move(prev_key, vec2(-1, 0));
             break;
         }
         case SDLK_d:
         {
-            actor_move(g_map, &g_enemies, &g_player, vec2(1, 0));
+            player_attack_or_move(prev_key, vec2(1, 0));
             break;
         }
         case SDLK_ESCAPE:
@@ -170,9 +204,10 @@ static void handle_input(SDL_Keysym key)
         default:
             break;
     }
+    prev_key = key.sym;
 }
 
-void init()
+static void tcod_init()
 {
     atexit(TCOD_quit);
 
@@ -201,6 +236,11 @@ void init()
     if (TCOD_context_new(&params, &g_context) < 0)
         fatal(__FILE__, __func__, __LINE__, "Could not open context: %s",
               TCOD_get_error());
+}
+
+void init()
+{
+    tcod_init();
 
     srand(time(NULL));
 
