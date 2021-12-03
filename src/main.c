@@ -4,8 +4,11 @@
 
 int main()
 {
-    init();
-    update();
-    end();
+    Game game;
+
+    init(&game);
+    update(&game);
+    end(&game);
+
     return EXIT_SUCCESS;
 }

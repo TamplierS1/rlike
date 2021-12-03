@@ -13,7 +13,7 @@ typedef struct
     void* data;
 } Event;
 
-typedef void(*Subscriber)(Event* event);
+typedef void (*Subscriber)(Event* event);
 
 void event_system_init();
 void event_subscribe(Subscriber sub);
