@@ -2,4 +2,4 @@ build
 .cache
 .idea
 .vscode
-res/saves
+res/saves/*
