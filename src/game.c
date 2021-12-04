@@ -15,38 +15,38 @@
 
 Game* g_game = NULL;
 
-/*********** SAVING ***************/
-static bool load_map()
-{
-    if (srz_load_map("res/saves/map.json", g_game->map) != OK ||
-        srz_load_player("res/saves/player.json", &g_game->player) != OK ||
-        srz_load_enemies("res/saves/enemies.json", &g_game->enemies) != OK)
-        return false;
-    return true;
-}
-
-static void generate_map()
-{
-    char name_arr[7] = "Player";
-    vec_char_t name;
-    vec_init(&name);
-    vec_pusharr(&name, name_arr, 7);
-    g_game->player = (Actor){0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 10, true};
-
-    vec_init(&g_game->enemies);
-    g_game->map = map_generate(&g_game->player.pos, &g_game->enemies);
-}
-
 /*********** UTILITY ***************/
+
+static void remove_player()
+{
+    for (int i = 0; i < g_game->actors.length; i++)
+    {
+        if (g_game->actors.data[i].id == g_game->player_id)
+        {
+            vec_deinit(&g_game->actors.data[i].name);
+            vec_swapsplice(&g_game->actors, i, 1);
+        }
+    }
+}
+
+static Actor* find_player()
+{
+    for (int i = 0; i < g_game->actors.length; i++)
+    {
+        if (g_game->actors.data[i].id == g_game->player_id)
+            return &g_game->actors.data[i];
+    }
+    return NULL;
+}
 
 // returns NULL if no enemy was found at position `pos`.
 static Actor* find_enemy_at(Vec2 pos)
 {
-    for (int i = 0; i < g_game->enemies.length; i++)
+    for (int i = 0; i < g_game->actors.length; i++)
     {
-        if (vec2_equals(g_game->enemies.data[i].pos, pos))
+        if (vec2_equals(g_game->actors.data[i].pos, pos))
         {
-            return &g_game->enemies.data[i];
+            return &g_game->actors.data[i];
         }
     }
     return NULL;
@@ -61,16 +61,48 @@ static Vec2 apply_camera_to_position(Vec2 pos)
 
 static bool is_player_here(Tile* tile)
 {
-    return vec2_equals(tile->pos, g_game->player.pos);
+    return vec2_equals(tile->pos, find_player()->pos);
 }
+
+/*********** SAVING ***************/
+static bool load_map()
+{
+    Actor player;
+    if (srz_load_map("res/saves/map.json", g_game->map) != OK ||
+        srz_load_enemies("res/saves/enemies.json", &g_game->actors) != OK ||
+        srz_load_player("res/saves/player.json", &player) != OK)
+        return false;
+    vec_push(&g_game->actors, player);
+    g_game->player_id = player.id;
+
+    return true;
+}
+
+static void generate_map()
+{
+    char name_arr[7] = "Player";
+    vec_char_t name;
+    vec_init(&name);
+    vec_pusharr(&name, name_arr, 7);
+    Actor player = {0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 10, 12, true};
+
+    vec_init(&g_game->actors);
+    g_game->map = map_generate(&player.pos, &g_game->actors);
+    g_game->player_id = 0;
+    vec_push(&g_game->actors, player);
+}
+
+/*********** GAMEPLAY **************/
 
 static void update_enemy_pathfinding()
 {
-    for (int i = 0; i < g_game->enemies.length; i++)
+    for (int i = 0; i < g_game->actors.length; i++)
     {
-        Actor* enemy = &g_game->enemies.data[i];
-        // TODO: move the vision radius into `Actor` struct.
-        int radius = 8;
+        Actor* enemy = &g_game->actors.data[i];
+        if (enemy->id == g_game->player_id)
+            continue;
+
+        int radius = enemy->vision_radius;
 
         bool player_is_found = false;
 
@@ -102,45 +134,41 @@ static void update_enemy_pathfinding()
 
         if (player_is_found)
         {
-            Vec2 dir = path_find_next_move(g_game->map, enemy->pos, g_game->player.pos);
-            actor_move(g_game->map, &g_game->enemies, &g_game->enemies.data[i], dir);
+            Vec2 dir = path_find_next_move(g_game->map, enemy->pos, find_player()->pos);
+            actor_move(g_game->map, &g_game->actors, &g_game->actors.data[i], dir);
         }
     }
 }
-
-/*********** GAMEPLAY **************/
 
 static void player_attack_or_move(SDL_Keycode prev_key, Vec2 dir)
 {
     if (prev_key == SDLK_b)
     {
-        Vec2 enemy_pos = vec2(g_game->player.pos.x + dir.x, g_game->player.pos.y + dir.y);
+        Vec2 enemy_pos = vec2(find_player()->pos.x + dir.x, find_player()->pos.y + dir.y);
         Actor* enemy = find_enemy_at(enemy_pos);
         if (enemy == NULL)
             return;
 
-        EventAttack attack = {&g_game->player, enemy};
+        EventAttack attack = {find_player(), enemy, find_player()->id};
         Event event = {EVENT_ATTACK, &attack};
         event_send(&event);
     }
     else
     {
-        actor_move(g_game->map, &g_game->enemies, &g_game->player, dir);
+        actor_move(g_game->map, &g_game->actors, find_player(), dir);
     }
 }
 
 static void clear_dead_enemies()
 {
-    int i;
-    Actor enemy;
-    vec_foreach(&g_game->enemies, enemy, i)
+    for (int i = 0; i < g_game->actors.length; i++)
     {
-        if (!enemy.is_alive)
+        if (!g_game->actors.data[i].is_alive)
         {
-            EventDeath event_death = {&enemy};
+            EventDeath event_death = {&g_game->actors.data[i]};
             Event event = {EVENT_DEATH, &event_death};
             event_send(&event);
-            vec_swapsplice(&g_game->enemies, i, 1);
+            vec_swapsplice(&g_game->actors, i, 1);
         }
     }
 }
@@ -183,7 +211,7 @@ static void draw_actors()
 {
     int i;
     Actor enemy;
-    vec_foreach(&g_game->enemies, enemy, i)
+    vec_foreach(&g_game->actors, enemy, i)
     {
         // Enemies are not drawn even if they're on an explored tile.
         draw(enemy.pos, enemy.symbol, enemy.color,
@@ -193,9 +221,6 @@ static void draw_actors()
         //        draw(enemy.pos, enemy.symbol, enemy.color,
         //             map_tile(g_map, enemy.pos)->back_color, true, true);
     }
-
-    draw(g_game->player.pos, g_game->player.symbol, g_game->player.color,
-         map_tile(g_game->map, g_game->player.pos)->back_color, true, false);
 }
 
 /*************** CORE *****************/
@@ -206,7 +231,7 @@ static void render()
 
     draw_map();
     draw_actors();
-    gui_render(g_game->console, &g_game->player);
+    gui_render(g_game->console, find_player());
 
     TCOD_context_present(g_game->context, g_game->console, NULL);
 }
@@ -277,6 +302,7 @@ static void tcod_init()
               TCOD_get_error());
 }
 
+// TODO: move the game instance inside this file.
 void init(Game* game)
 {
     g_game = game;
@@ -304,7 +330,7 @@ void init(Game* game)
     event_subscribe(actor_on_event);
     event_subscribe(gui_on_event);
 
-    g_game->camera.target = g_game->player.pos;
+    g_game->camera.target = find_player()->pos;
     g_game->camera.offset = vec2(g_game->width / 2, g_game->height / 2);
 }
 
@@ -320,12 +346,14 @@ void update()
             {
                 case SDL_KEYDOWN:
                 {
+                    // TODO: you need to press 2 keys in order to make an attack.
+                    // It means that the enemies will get to make 2 turns instead of 1.
                     bool was_key_used = gui_handle_input(event.key.keysym);
                     if (!was_key_used)
                     {
                         handle_input(event.key.keysym);
                         update_enemy_pathfinding();
-                        map_update_fog_of_war(g_game->map, g_game->player.pos,
+                        map_update_fog_of_war(g_game->map, find_player()->pos,
                                               g_game->player_vision_radius);
                         clear_dead_enemies();
                     }
@@ -337,7 +365,7 @@ void update()
             }
         }
 
-        g_game->camera.target = g_game->player.pos;
+        g_game->camera.target = find_player()->pos;
 
         render();
     }
@@ -345,16 +373,17 @@ void update()
 
 void end()
 {
+    srz_save_player(find_player(), "res/saves/player.json");
+    remove_player();
     srz_save_map(g_game->map, "res/saves/map.json");
-    srz_save_enemies(&g_game->enemies, "res/saves/enemies.json");
-    srz_save_player(&g_game->player, "res/saves/player.json");
+    srz_save_enemies(&g_game->actors, "res/saves/enemies.json");
 
-    for (int i = 0; i < g_game->enemies.length; i++)
+    for (int i = 0; i < g_game->actors.length; i++)
     {
-        vec_deinit(&g_game->enemies.data[i].name);
+        vec_deinit(&g_game->actors.data[i].name);
     }
 
-    vec_deinit(&g_game->enemies);
+    vec_deinit(&g_game->actors);
     event_system_deinit();
     map_free(g_game->map);
 }

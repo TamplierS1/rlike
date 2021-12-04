@@ -52,7 +52,7 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         vec_init(&name);
         vec_pusharr(&name, name_arr, 7);
 
-        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 5, true};
+        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 5, 8, true};
         vec_push(enemies, enemy);
         enemies_spawned++;
     }

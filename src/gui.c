@@ -53,7 +53,7 @@ void gui_on_event(Event* event)
         {
             EventAttack* event_attack = (EventAttack*)(event->data);
             // If the player is the attacker.
-            if (event_attack->attacker->id == 0)
+            if (event_attack->attacker->id == event_attack->player_id)
             {
                 g_engaged_enemy = event_attack->victim;
                 g_is_enemy_alive = true;
