@@ -4,6 +4,7 @@
 #include "map.h"
 #include "symbols.h"
 #include "actor.h"
+#include "pathfinding.h"
 
 static int rand_int(int min, int max)
 {
@@ -193,45 +194,10 @@ void map_free(Map* map)
     map = NULL;
 }
 
-static void cast_ray(Map* map, Vec2 begin, Vec2 end)
+static void make_visible(Tile* tile)
 {
-    int x0 = begin.x, y0 = begin.y;
-    int x1 = end.x, y1 = end.y;
-
-    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-    int err = dx + dy, e2;
-
-    bool end_ray = false;
-    for (;;)
-    {
-        if (end_ray)
-            return;
-
-        if (map_check_bounds(map, vec2(x0, y0)))
-        {
-            if (map_tile(map, vec2(x0, y0))->symbol == WALL)
-                end_ray = true;
-
-            map_tile(map, vec2(x0, y0))->is_visible = true;
-            map_tile(map, vec2(x0, y0))->was_explored = true;
-        }
-
-        if (x0 == x1 && y0 == y1)
-            break;
-
-        e2 = 2 * err;
-        if (e2 >= dy)
-        {
-            err += dy;
-            x0 += sx;
-        }
-        if (e2 <= dx)
-        {
-            err += dx;
-            y0 += sy;
-        }
-    }
+    tile->is_visible = true;
+    tile->was_explored = true;
 }
 
 void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
@@ -253,15 +219,15 @@ void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius)
     // Cast rays to the upper and bottom part of visible radius.
     for (int x = pos.x - radius; x <= pos.x + radius; ++x)
     {
-        cast_ray(map, pos, vec2(x, pos.y - radius));
-        cast_ray(map, pos, vec2(x, pos.y + radius));
+        path_cast_ray(map, pos, vec2(x, pos.y - radius), make_visible);
+        path_cast_ray(map, pos, vec2(x, pos.y + radius), make_visible);
     }
 
     // Right and left part.
     for (int y = pos.y - radius; y <= pos.y + radius; ++y)
     {
-        cast_ray(map, pos, vec2(pos.x + radius, y));
-        cast_ray(map, pos, vec2(pos.x - radius, y));
+        path_cast_ray(map, pos, vec2(pos.x + radius, y), make_visible);
+        path_cast_ray(map, pos, vec2(pos.x - radius, y), make_visible);
     }
 }
 
