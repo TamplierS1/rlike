@@ -7,7 +7,6 @@ static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies, Vec2 d
     if (!map_check_bounds(map, actor->pos) || !map_is_walkable(map, actor->pos))
         return true;
 
-    // TODO: the collisions with the player are not checked here. Fix it.
     for (int i = 0; i < enemies->length; ++i)
     {
         // We shouldn't check for collisions against the same actor.

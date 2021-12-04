@@ -20,11 +20,10 @@ typedef struct
     bool quit;
 
     Map* map;
-    // The player always has `id` 0.
-    Actor player;
-    vec_actor_t enemies;
+    vec_actor_t actors;
     Camera camera;
     int player_vision_radius;
+    int player_id;
 } Game;
 
 void init(Game* game);

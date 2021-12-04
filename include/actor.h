@@ -14,6 +14,7 @@ typedef struct
 
     int hp;
     int dmg;
+    int vision_radius;
 
     bool is_alive;
 } Actor;
@@ -22,6 +23,7 @@ typedef struct
 {
     Actor* attacker;
     Actor* victim;
+    int player_id;
 } EventAttack;
 
 typedef struct
