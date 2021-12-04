@@ -5,11 +5,13 @@
 
 #include <SDL.h>
 
+#include "actor.h"
 #include "symbols.h"
 #include "event.h"
 #include "gui.h"
 #include "error.h"
 #include "serialization.h"
+#include "pathfinding.h"
 
 Game* g_game = NULL;
 
@@ -55,6 +57,55 @@ static Vec2 apply_camera_to_position(Vec2 pos)
 {
     return vec2(pos.x - g_game->camera.target.x + g_game->camera.offset.x,
                 pos.y - g_game->camera.target.y + g_game->camera.offset.y);
+}
+
+static bool is_player_here(Tile* tile)
+{
+    return vec2_equals(tile->pos, g_game->player.pos);
+}
+
+static void update_enemy_pathfinding()
+{
+    for (int i = 0; i < g_game->enemies.length; i++)
+    {
+        Actor* enemy = &g_game->enemies.data[i];
+        // TODO: move the vision radius into `Actor` struct.
+        int radius = 8;
+
+        bool player_is_found = false;
+
+        // Cast rays to the upper and bottom part of visible radius.
+        for (int x = enemy->pos.x - radius; x <= enemy->pos.x + radius; ++x)
+        {
+            if (path_cast_ray_and_return(g_game->map, enemy->pos,
+                                         vec2(x, enemy->pos.y - radius),
+                                         is_player_here) ||
+                path_cast_ray_and_return(g_game->map, enemy->pos,
+                                         vec2(x, enemy->pos.y + radius), is_player_here))
+            {
+                player_is_found = true;
+            }
+        }
+
+        // Right and left part.
+        for (int y = enemy->pos.y - radius; y <= enemy->pos.y + radius; ++y)
+        {
+            if (path_cast_ray_and_return(g_game->map, enemy->pos,
+                                         vec2(enemy->pos.x + radius, y),
+                                         is_player_here) ||
+                path_cast_ray_and_return(g_game->map, enemy->pos,
+                                         vec2(enemy->pos.x - radius, y), is_player_here))
+            {
+                player_is_found = true;
+            }
+        }
+
+        if (player_is_found)
+        {
+            Vec2 dir = path_find_next_move(g_game->map, enemy->pos, g_game->player.pos);
+            actor_move(g_game->map, &g_game->enemies, &g_game->enemies.data[i], dir);
+        }
+    }
 }
 
 /*********** GAMEPLAY **************/
@@ -271,7 +322,13 @@ void update()
                 {
                     bool was_key_used = gui_handle_input(event.key.keysym);
                     if (!was_key_used)
+                    {
                         handle_input(event.key.keysym);
+                        update_enemy_pathfinding();
+                        map_update_fog_of_war(g_game->map, g_game->player.pos,
+                                              g_game->player_vision_radius);
+                        clear_dead_enemies();
+                    }
                     break;
                 }
                 case SDL_QUIT:
@@ -282,9 +339,6 @@ void update()
 
         g_game->camera.target = g_game->player.pos;
 
-        map_update_fog_of_war(g_game->map, g_game->player.pos,
-                              g_game->player_vision_radius);
-        clear_dead_enemies();
         render();
     }
 }
