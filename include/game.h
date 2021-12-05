@@ -26,7 +26,7 @@ typedef struct
     int player_id;
 } Game;
 
-void init(Game* game);
+void init();
 void update();
 void end();
 
