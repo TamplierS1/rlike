@@ -4,11 +4,9 @@
 
 int main()
 {
-    Game game;
-
-    init(&game);
-    update(&game);
-    end(&game);
+    init();
+    update();
+    end();
 
     return EXIT_SUCCESS;
 }
