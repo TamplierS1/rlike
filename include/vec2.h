@@ -1,5 +1,5 @@
 #ifndef VEC2_H
-#define VEC_H
+#define VEC2_H
 
 #include <stdbool.h>
 

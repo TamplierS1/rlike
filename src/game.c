@@ -14,6 +14,7 @@
 #include "error.h"
 #include "serialization.h"
 #include "pathfinding.h"
+#include "ai.h"
 
 Game g_game;
 
@@ -31,7 +32,7 @@ static void remove_player()
     }
 }
 
-static Actor* find_player()
+Actor* find_player()
 {
     for (int i = 0; i < g_game.actors.length; i++)
     {
@@ -60,12 +61,6 @@ static Vec2 apply_camera_to_position(Vec2 pos)
     return vec2(pos.x - g_game.camera.target.x + g_game.camera.offset.x,
                 pos.y - g_game.camera.target.y + g_game.camera.offset.y);
 }
-
-static bool is_player_here(Tile* tile)
-{
-    return vec2_equals(tile->pos, find_player()->pos);
-}
-
 /*********** SAVING ***************/
 static bool load_map()
 {
@@ -95,52 +90,6 @@ static void generate_map()
 }
 
 /*********** GAMEPLAY **************/
-
-static void update_enemy_pathfinding()
-{
-    for (int i = 0; i < g_game.actors.length; i++)
-    {
-        Actor* enemy = &g_game.actors.data[i];
-        if (enemy->id == g_game.player_id)
-            continue;
-
-        int radius = enemy->vision_radius;
-
-        bool player_is_found = false;
-
-        // Cast rays to the upper and bottom part of visible radius.
-        for (int x = enemy->pos.x - radius; x <= enemy->pos.x + radius; ++x)
-        {
-            if (path_cast_ray_and_return(g_game.map, enemy->pos,
-                                         vec2(x, enemy->pos.y - radius),
-                                         is_player_here) ||
-                path_cast_ray_and_return(g_game.map, enemy->pos,
-                                         vec2(x, enemy->pos.y + radius), is_player_here))
-            {
-                player_is_found = true;
-            }
-        }
-
-        // Right and left part.
-        for (int y = enemy->pos.y - radius; y <= enemy->pos.y + radius; ++y)
-        {
-            if (path_cast_ray_and_return(g_game.map, enemy->pos,
-                                         vec2(enemy->pos.x + radius, y),
-                                         is_player_here) ||
-                path_cast_ray_and_return(g_game.map, enemy->pos,
-                                         vec2(enemy->pos.x - radius, y), is_player_here))
-            {
-                player_is_found = true;
-            }
-        }
-
-        if (player_is_found)
-        {
-            Vec2 dir = path_find_next_move(g_game.map, enemy->pos, find_player()->pos);
-            actor_move(g_game.map, &g_game.actors, &g_game.actors.data[i], dir);
-        }
-    }
-}
 
 static void player_attack_or_move(SDL_Keycode prev_key, Vec2 dir)
 {
@@ -303,7 +252,6 @@ static void tcod_init()
               TCOD_get_error());
 }
 
-// TODO: move the game instance inside this file.
 void init()
 {
     g_game.title = "rlike";
@@ -349,7 +297,7 @@ void update()
                     bool was_key_used = gui_handle_input(event.key.keysym);
                     if (!was_key_used && handle_input(event.key.keysym))
                     {
-                        update_enemy_pathfinding();
+                        ai_update(&g_game);
                         map_update_fog_of_war(g_game.map, find_player()->pos,
                                               g_game.player_vision_radius);
                         clear_dead_enemies();
