@@ -30,4 +30,6 @@ void init();
 void update();
 void end();
 
+Actor* find_player();
+
 #endif  // GAME_H

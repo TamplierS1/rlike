@@ -8,6 +8,10 @@ set(LIBTCOD_GLAD vendored)
 set(LIBTCOD_LODEPNG vendored)
 set(LIBTCOD_STB vendored)
 
+set(SDL2_SHARED OFF)
+set(DISABLE_WERROR ON)
+set(DISABLE_EXTRA_LIBST ON)
+
 add_executable(rlike "")
 add_subdirectory(src)
 add_subdirectory(third_party/libtcod)
