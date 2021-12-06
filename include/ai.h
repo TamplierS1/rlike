@@ -3,6 +3,7 @@
 
 #include "game.h"
 
+void ai_init();
 void ai_update(Game* game);
 
 #endif  // AI_H
