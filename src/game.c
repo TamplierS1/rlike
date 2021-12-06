@@ -278,6 +278,8 @@ void init()
     event_subscribe(actor_on_event);
     event_subscribe(gui_on_event);
 
+    ai_init();
+
     g_game.camera.target = find_player()->pos;
     g_game.camera.offset = vec2(g_game.width / 2, g_game.height / 2);
 }
