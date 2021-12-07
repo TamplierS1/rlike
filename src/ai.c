@@ -2,7 +2,7 @@
 #include "game.h"
 #include "pathfinding.h"
 
-// TODO: come up with a better idea to store these.
+// TODO: come up with a better way to store these.
 // indexes are the ids of the enemies
 static Vec2 g_last_known_player_pos[64];
 static bool g_has_seen_player[64];

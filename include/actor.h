@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "event.h"
+#include "inventory.h"
 
 typedef struct
 {
@@ -15,6 +16,7 @@ typedef struct
     int hp;
     int dmg;
     int vision_radius;
+    Inventory inventory;
 
     bool is_alive;
 } Actor;
