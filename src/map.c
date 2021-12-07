@@ -5,6 +5,7 @@
 #include "symbols.h"
 #include "actor.h"
 #include "pathfinding.h"
+#include "inventory.h"
 
 static int rand_int(int min, int max)
 {
@@ -46,13 +47,21 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         if (enemies_spawned >= map->num_enemies)
             return;
 
+        ItemWeapon* sword = malloc(sizeof(ItemWeapon));
+        sword->dmg = 10;
+
+        Inventory inv = inv_create_inventory();
+        inv_construct_item(&inv, "Sword", ITEM_WEAPON, sword);
+
         char name_arr[7];
         sprintf(name_arr, "Enemy%d", enemy_id);
         vec_char_t name;
         vec_init(&name);
         vec_pusharr(&name, name_arr, 7);
 
-        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 5, 8, true};
+        // clang-format off
+        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 5, 8, inv, true};
+        // clang-format on
         vec_push(enemies, enemy);
         enemies_spawned++;
     }

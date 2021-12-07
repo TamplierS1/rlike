@@ -2,6 +2,9 @@
 
 #include <json.h>
 
+#include "inventory.h"
+#include "json_object.h"
+#include "json_object_private.h"
 #include "serialization.h"
 #include "error.h"
 
@@ -200,6 +203,48 @@ static bool deserialize_map(struct json_object* jmap, Map* out_map)
     return true;
 }
 
+static bool deserialize_inventory(struct json_object* parent, const char* name,
+                                  Inventory* out_inv)
+{
+    *out_inv = inv_create_inventory();
+
+    struct json_object* jinv;
+    struct json_object* jitems;
+    if (!json_object_object_get_ex(parent, name, &jinv) ||
+        !json_object_object_get_ex(jinv, "items", &jitems))
+        return false;
+
+    for (size_t i = 0; i < json_object_array_length(jitems); i++)
+    {
+        struct json_object* jitem = json_object_array_get_idx(jitems, i);
+        struct json_object* jsubitem;
+        if (!json_object_object_get_ex(jitem, "item", &jsubitem))
+            return false;
+
+        Item item;
+        int category;
+        if (!deserialize_string(jitem, "name", &item.name) ||
+            !deserialize_int(jitem, "category", &category))
+            return false;
+        item.category = (ItemCategory)category;
+
+        switch (item.category)
+        {
+            case ITEM_WEAPON:
+            {
+                ItemWeapon* weapon = malloc(sizeof(ItemWeapon));
+                if (!deserialize_int(jsubitem, "dmg", &weapon->dmg))
+                    return false;
+                item.item = weapon;
+                break;
+            }
+        }
+        inv_add_item(out_inv, &item);
+    }
+
+    return true;
+}
+
 static bool deserialize_actor(struct json_object* jactor, Actor* out_actor)
 {
     Actor actor;
@@ -212,6 +257,7 @@ static bool deserialize_actor(struct json_object* jactor, Actor* out_actor)
         !deserialize_int(jactor, "hp", &actor.hp) ||
         !deserialize_int(jactor, "dmg", &actor.dmg) ||
         !deserialize_int(jactor, "vision_radius", &actor.vision_radius) ||
+        !deserialize_inventory(jactor, "inventory", &actor.inventory) ||
         !deserialize_bool(jactor, "is_alive", &actor.is_alive))
         return false;
     actor.symbol = (char)symbol;
@@ -257,6 +303,36 @@ static void serialize_vec(struct json_object* parent, const char* name, Vec2 vec
     json_object_object_add(parent, name, jvec);
 }
 
+static void serialize_inventory(struct json_object* parent, const char* name,
+                                Inventory* inv)
+{
+    struct json_object* jinv = json_object_new_object();
+    struct json_object* jitems = json_object_new_array();
+    for (int i = 0; i < inv->items.length; i++)
+    {
+        Item* item = &inv->items.data[i];
+        struct json_object* jitem = json_object_new_object();
+        serialize_string(jitem, "name", &item->name);
+        serialize_int(jitem, "category", item->category);
+
+        struct json_object* jsubitem = json_object_new_object();
+        switch (item->category)
+        {
+            case ITEM_WEAPON:
+            {
+                ItemWeapon* subitem = (ItemWeapon*)item->item;
+                serialize_int(jsubitem, "dmg", subitem->dmg);
+                break;
+            }
+        }
+        json_object_object_add(jitem, "item", jsubitem);
+
+        json_object_array_add(jitems, jitem);
+    }
+    json_object_object_add(jinv, "items", jitems);
+    json_object_object_add(parent, name, jinv);
+}
+
 static struct json_object* serialize_actor(Actor* actor)
 {
     struct json_object* jactor = json_object_new_object();
@@ -269,6 +345,7 @@ static struct json_object* serialize_actor(Actor* actor)
     serialize_int(jactor, "hp", actor->hp);
     serialize_int(jactor, "dmg", actor->dmg);
     serialize_int(jactor, "vision_radius", actor->vision_radius);
+    serialize_inventory(jactor, "inventory", &actor->inventory);
     serialize_bool(jactor, "is_alive", actor->is_alive);
 
     return jactor;
