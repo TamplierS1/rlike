@@ -14,7 +14,6 @@ typedef struct
     vec_char_t name;
 
     int hp;
-    int dmg;
     int vision_radius;
     Inventory inventory;
 

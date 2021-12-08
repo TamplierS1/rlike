@@ -83,14 +83,15 @@ static void generate_map()
     sword->dmg = 10;
 
     Inventory inv = inv_create_inventory();
-    inv_construct_item(&inv, "Sword", ITEM_WEAPON, sword);
+    Item* weapon = inv_construct_add_item(&inv, "Sword", ITEM_WEAPON, sword);
+    inv_equip_item(&inv, weapon->id);
 
     // TODO: add some utilities for string handling.
     char name_arr[7] = "Player";
     vec_char_t name;
     vec_init(&name);
     vec_pusharr(&name, name_arr, strlen("Player"));
-    Actor player = {0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 10, 12, inv, true};
+    Actor player = {0, {0, 0}, PLAYER, PLAYER_COLOR, name, 100, 12, inv, true};
 
     vec_init(&g_game.actors);
     g_game.map = map_generate(&player.pos, &g_game.actors);

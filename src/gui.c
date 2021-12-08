@@ -25,10 +25,10 @@ static void draw_actor_stats(TCOD_Console* console, Actor* actor, Vec2 frame_pos
                            "%d\n",
                            actor->hp);
     Vec2 dmg_pos = vec2(hp_pos.x, hp_pos.y + 2);
-    TCOD_console_printf_ex(console, dmg_pos.x, dmg_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
-                           "DMG: "
-                           "%d\n",
-                           actor->dmg);
+    // TCOD_console_printf_ex(console, dmg_pos.x, dmg_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
+    //                        "DMG: "
+    //                        "%d\n",
+    //                        actor->dmg);
 
     /* Color the text. libtcod apparently doesn't offer an easier way of doing this. */
     for (int x = hp_pos.x; x < hp_pos.x + frame_size.x - 1; x++)
