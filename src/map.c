@@ -51,7 +51,8 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         sword->dmg = 10;
 
         Inventory inv = inv_create_inventory();
-        inv_construct_item(&inv, "Sword", ITEM_WEAPON, sword);
+        Item* weapon = inv_construct_add_item(&inv, "Sword", ITEM_WEAPON, sword);
+        inv_equip_item(&inv, weapon->id);
 
         char name_arr[7];
         sprintf(name_arr, "Enemy%d", enemy_id);
@@ -60,7 +61,7 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         vec_pusharr(&name, name_arr, 7);
 
         // clang-format off
-        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 5, 8, inv, true};
+        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 8, inv, true};
         // clang-format on
         vec_push(enemies, enemy);
         enemies_spawned++;

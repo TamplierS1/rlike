@@ -1,6 +1,7 @@
 #include <libtcod.h>
 
 #include "actor.h"
+#include "inventory.h"
 
 static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies, Vec2 dir)
 {
@@ -37,9 +38,13 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 
 void actor_attack(Actor* victim, Actor* attacker)
 {
-    victim->hp -= attacker->dmg;
-    if (victim->hp <= 0)
-        victim->is_alive = false;
+    Item* weapon = inv_find_item_ex(&attacker->inventory, ITEM_WEAPON, true);
+    if (weapon != NULL)
+    {
+        victim->hp -= ((ItemWeapon*)weapon->item)->dmg;
+        if (victim->hp <= 0)
+            victim->is_alive = false;
+    }
 }
 
 void actor_on_event(Event* event)

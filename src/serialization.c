@@ -203,6 +203,42 @@ static bool deserialize_map(struct json_object* jmap, Map* out_map)
     return true;
 }
 
+static bool deserialize_item(struct json_object* parent, Item* out_item)
+{
+    Item item;
+    int category;
+    if (!deserialize_string(parent, "name", &item.name) ||
+        !deserialize_int(parent, "category", &category) ||
+        !deserialize_bool(parent, "equipped", &item.equipped) ||
+        !deserialize_int(parent, "id", &item.id))
+        return false;
+    item.category = (ItemCategory)category;
+
+    struct json_object* jsubitem;
+    if (!json_object_object_get_ex(parent, "item", &jsubitem))
+        return false;
+
+    switch (item.category)
+    {
+        case ITEM_WEAPON:
+        {
+            ItemWeapon* weapon = malloc(sizeof(ItemWeapon));
+            if (!deserialize_int(jsubitem, "dmg", &weapon->dmg))
+                return false;
+            item.item = weapon;
+            break;
+        }
+        default:
+            fatal(__FILE__, __func__, __LINE__,
+                  "not all deserialization options were covered.");
+            break;
+    }
+
+    *out_item = item;
+
+    return true;
+}
+
 static bool deserialize_inventory(struct json_object* parent, const char* name,
                                   Inventory* out_inv)
 {
@@ -217,28 +253,11 @@ static bool deserialize_inventory(struct json_object* parent, const char* name,
     for (size_t i = 0; i < json_object_array_length(jitems); i++)
     {
         struct json_object* jitem = json_object_array_get_idx(jitems, i);
-        struct json_object* jsubitem;
-        if (!json_object_object_get_ex(jitem, "item", &jsubitem))
-            return false;
 
         Item item;
-        int category;
-        if (!deserialize_string(jitem, "name", &item.name) ||
-            !deserialize_int(jitem, "category", &category))
+        if (!deserialize_item(jitem, &item))
             return false;
-        item.category = (ItemCategory)category;
 
-        switch (item.category)
-        {
-            case ITEM_WEAPON:
-            {
-                ItemWeapon* weapon = malloc(sizeof(ItemWeapon));
-                if (!deserialize_int(jsubitem, "dmg", &weapon->dmg))
-                    return false;
-                item.item = weapon;
-                break;
-            }
-        }
         inv_add_item(out_inv, &item);
     }
 
@@ -255,7 +274,6 @@ static bool deserialize_actor(struct json_object* jactor, Actor* out_actor)
         !deserialize_color(jactor, "color", &actor.color) ||
         !deserialize_string(jactor, "name", &actor.name) ||
         !deserialize_int(jactor, "hp", &actor.hp) ||
-        !deserialize_int(jactor, "dmg", &actor.dmg) ||
         !deserialize_int(jactor, "vision_radius", &actor.vision_radius) ||
         !deserialize_inventory(jactor, "inventory", &actor.inventory) ||
         !deserialize_bool(jactor, "is_alive", &actor.is_alive))
@@ -303,6 +321,57 @@ static void serialize_vec(struct json_object* parent, const char* name, Vec2 vec
     json_object_object_add(parent, name, jvec);
 }
 
+static void serialize_item_to_array(struct json_object* parent, Item* item)
+{
+    struct json_object* jitem = json_object_new_object();
+    serialize_string(jitem, "name", &item->name);
+    serialize_int(jitem, "category", item->category);
+
+    struct json_object* jsubitem = json_object_new_object();
+    switch (item->category)
+    {
+        case ITEM_WEAPON:
+        {
+            ItemWeapon* subitem = (ItemWeapon*)item->item;
+            serialize_int(jsubitem, "dmg", subitem->dmg);
+            break;
+        }
+        default:
+            fatal(__FILE__, __func__, __LINE__,
+                  "not all deserialization options were covered.");
+            break;
+    }
+    json_object_object_add(jitem, "item", jsubitem);
+    serialize_bool(jitem, "equipped", item->equipped);
+    serialize_int(jitem, "id", item->id);
+
+    json_object_array_add(parent, jitem);
+}
+
+static void serialize_item_to_object(struct json_object* parent, const char* name,
+                                     Item* item)
+{
+    struct json_object* jitem = json_object_new_object();
+    serialize_string(jitem, "name", &item->name);
+    serialize_int(jitem, "category", item->category);
+
+    struct json_object* jsubitem = json_object_new_object();
+    switch (item->category)
+    {
+        case ITEM_WEAPON:
+        {
+            ItemWeapon* subitem = (ItemWeapon*)item->item;
+            serialize_int(jsubitem, "dmg", subitem->dmg);
+            break;
+        }
+    }
+    json_object_object_add(jitem, "item", jsubitem);
+    serialize_bool(jitem, "equipped", item->equipped);
+    serialize_int(jitem, "id", item->id);
+
+    json_object_object_add(parent, name, jitem);
+}
+
 static void serialize_inventory(struct json_object* parent, const char* name,
                                 Inventory* inv)
 {
@@ -311,23 +380,7 @@ static void serialize_inventory(struct json_object* parent, const char* name,
     for (int i = 0; i < inv->items.length; i++)
     {
         Item* item = &inv->items.data[i];
-        struct json_object* jitem = json_object_new_object();
-        serialize_string(jitem, "name", &item->name);
-        serialize_int(jitem, "category", item->category);
-
-        struct json_object* jsubitem = json_object_new_object();
-        switch (item->category)
-        {
-            case ITEM_WEAPON:
-            {
-                ItemWeapon* subitem = (ItemWeapon*)item->item;
-                serialize_int(jsubitem, "dmg", subitem->dmg);
-                break;
-            }
-        }
-        json_object_object_add(jitem, "item", jsubitem);
-
-        json_object_array_add(jitems, jitem);
+        serialize_item_to_array(jitems, item);
     }
     json_object_object_add(jinv, "items", jitems);
     json_object_object_add(parent, name, jinv);
@@ -343,7 +396,6 @@ static struct json_object* serialize_actor(Actor* actor)
     serialize_color(jactor, "color", actor->color);
     serialize_string(jactor, "name", &actor->name);
     serialize_int(jactor, "hp", actor->hp);
-    serialize_int(jactor, "dmg", actor->dmg);
     serialize_int(jactor, "vision_radius", actor->vision_radius);
     serialize_inventory(jactor, "inventory", &actor->inventory);
     serialize_bool(jactor, "is_alive", actor->is_alive);
