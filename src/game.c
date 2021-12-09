@@ -302,7 +302,8 @@ void update()
             {
                 case SDL_KEYDOWN:
                 {
-                    bool was_key_used = gui_handle_input(event.key.keysym);
+                    bool was_key_used =
+                        gui_handle_input(event.key.keysym, &find_player()->inventory);
                     if (!was_key_used && handle_input(event.key.keysym))
                     {
                         ai_update(&g_game);

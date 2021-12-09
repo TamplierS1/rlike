@@ -1,3 +1,4 @@
+#include "SDL_keycode.h"
 #include "inventory.h"
 #include "libtcod.h"
 
@@ -11,7 +12,16 @@ static Actor* g_engaged_enemy = NULL;
 // to an enemy that is not NULL, which will cause the gui to
 // draw that enemy's stats.
 static bool g_is_enemy_alive = false;
-static bool g_display_inventory = true;
+static bool g_display_inventory = false;
+static int g_selected_inv_entry = 0;
+
+static void check_inventory_selection_bounds(Inventory* player_inventory)
+{
+    if (g_selected_inv_entry < 0)
+        g_selected_inv_entry = 0;
+    else if (g_selected_inv_entry >= player_inventory->items.length)
+        g_selected_inv_entry = player_inventory->items.length - 1;
+}
 
 static void draw_frame(TCOD_Console* console, Vec2 frame_pos, Vec2 frame_size,
                        Vec2 title_offset, sds title)
@@ -66,6 +76,9 @@ static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 fram
                                TCOD_LEFT, "[%c]", item->equipped ? 'X' : ' ');
         TCOD_console_printf_ex(console, entry_pos.x + 3, entry_pos.y, TCOD_BKGND_SET,
                                TCOD_LEFT, "%s", item->name);
+        if (i == g_selected_inv_entry)
+            apply_color(console, vec2(entry_pos.x + 3, entry_pos.y),
+                        sdslen(item->name) + 1, TCOD_darker_green);
     }
 }
 
@@ -96,9 +109,51 @@ void gui_on_event(Event* event)
     }
 }
 
-bool gui_handle_input(SDL_Keysym key)
+bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
 {
-    return false;
+    bool was_used = false;
+    switch (key.sym)
+    {
+        case SDLK_w:
+            if (g_display_inventory)
+            {
+                g_selected_inv_entry -= 1;
+                was_used = true;
+            }
+            break;
+        case SDLK_s:
+            if (g_display_inventory)
+            {
+                g_selected_inv_entry += 1;
+                was_used = true;
+            }
+            break;
+        case SDLK_RETURN:
+            if (g_display_inventory)
+            {
+                for (int i = 0; i < player_inv->items.length; i++)
+                {
+                    if (i == g_selected_inv_entry)
+                    {
+                        Item* item = &player_inv->items.data[i];
+                        if (item->equipped)
+                            inv_unequip_item(player_inv, item->id);
+                        else
+                            inv_equip_item(player_inv, item->id);
+                    }
+                }
+                was_used = true;
+            }
+            break;
+        case SDLK_i:
+            g_display_inventory = !g_display_inventory;
+            was_used = true;
+            break;
+    }
+
+    check_inventory_selection_bounds(player_inv);
+
+    return was_used;
 }
 
 void gui_render(TCOD_Console* console, Actor* player)
