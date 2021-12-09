@@ -14,7 +14,7 @@ static bool g_is_enemy_alive = false;
 static bool g_display_inventory = true;
 
 static void draw_frame(TCOD_Console* console, Vec2 frame_pos, Vec2 frame_size,
-                       Vec2 title_offset, char* title)
+                       Vec2 title_offset, sds title)
 {
     TCOD_console_draw_frame_rgb(console, frame_pos.x, frame_pos.y, frame_size.x,
                                 frame_size.y, NULL, &TCOD_light_gray, &TCOD_black,
@@ -37,7 +37,7 @@ static void apply_color(TCOD_Console* console, Vec2 begin, int length, TCOD_colo
 static void draw_actor_stats(TCOD_Console* console, Actor* actor, Vec2 frame_pos,
                              Vec2 frame_size)
 {
-    draw_frame(console, frame_pos, frame_size, vec2(1, 0), actor->name.data);
+    draw_frame(console, frame_pos, frame_size, vec2(1, 0), actor->name);
 
     Vec2 hp_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
     TCOD_console_printf_ex(console, hp_pos.x, hp_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
@@ -65,7 +65,7 @@ static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 fram
         TCOD_console_printf_ex(console, entry_pos.x, entry_pos.y, TCOD_BKGND_SET,
                                TCOD_LEFT, "[%c]", item->equipped ? 'X' : ' ');
         TCOD_console_printf_ex(console, entry_pos.x + 3, entry_pos.y, TCOD_BKGND_SET,
-                               TCOD_LEFT, "%s", item->name.data);
+                               TCOD_LEFT, "%s", item->name);
     }
 }
 
@@ -87,6 +87,7 @@ void gui_on_event(Event* event)
         }
         case EVENT_DEATH:
         {
+            // TODO: fix the crash that happens when the player dies.
             EventDeath* event_death = (EventDeath*)(event->data);
             if (event_death->dead_actor->id == g_engaged_enemy->id)
                 g_is_enemy_alive = false;

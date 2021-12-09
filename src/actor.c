@@ -3,7 +3,7 @@
 #include "actor.h"
 #include "inventory.h"
 
-static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies, Vec2 dir)
+static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies)
 {
     if (!map_check_bounds(map, actor->pos) || !map_is_walkable(map, actor->pos))
         return true;
@@ -23,14 +23,14 @@ static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies, Vec2 d
 
 void actor_free(Actor* actor)
 {
-    vec_deinit(&actor->name);
+    sdsfree(actor->name);
 }
 
 void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 {
     actor->pos = vec2_add(actor->pos, dir);
 
-    if (check_collision(map, actor, enemies, dir))
+    if (check_collision(map, actor, enemies))
     {
         actor->pos = vec2_sub(actor->pos, dir);
     }

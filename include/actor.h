@@ -4,6 +4,7 @@
 #include "map.h"
 #include "event.h"
 #include "inventory.h"
+#include "sds.h"
 
 typedef struct
 {
@@ -11,7 +12,7 @@ typedef struct
     Vec2 pos;
     char symbol;
     TCOD_color_t color;
-    vec_char_t name;
+    sds name;
 
     int hp;
     int vision_radius;

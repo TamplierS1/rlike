@@ -2,6 +2,7 @@
 
 #include <json.h>
 
+#include "SDL_sensor.h"
 #include "inventory.h"
 #include "json_object.h"
 #include "json_object_private.h"
@@ -99,16 +100,13 @@ static bool deserialize_bool(struct json_object* parent, const char* name, bool*
 }
 
 static bool deserialize_string(struct json_object* parent, const char* name,
-                               vec_char_t* out_string)
+                               sds* out_string)
 {
     struct json_object* jstring;
     bool result = json_object_object_get_ex(parent, name, &jstring);
 
-    vec_init(out_string);
     const char* string = json_object_get_string(jstring);
-    vec_pusharr(out_string, string, strlen(string));
-    // TODO: this is not needed. Remove it.
-    vec_push(out_string, '\0');
+    *out_string = sdsnew(string);
 
     return result;
 }
@@ -208,6 +206,7 @@ static bool deserialize_item(struct json_object* parent, Item* out_item)
 {
     Item item;
     int category;
+    item.name = sdsempty();
     if (!deserialize_string(parent, "name", &item.name) ||
         !deserialize_int(parent, "category", &category) ||
         !deserialize_bool(parent, "equipped", &item.equipped) ||
@@ -269,6 +268,7 @@ static bool deserialize_actor(struct json_object* jactor, Actor* out_actor)
 {
     Actor actor;
     int symbol = 0;
+    actor.name = sdsempty();
     if (!deserialize_int(jactor, "id", &actor.id) ||
         !deserialize_vec(jactor, "pos", &actor.pos) ||
         !deserialize_int(jactor, "symbol", &symbol) ||
@@ -296,10 +296,9 @@ static void serialize_bool(struct json_object* parent, const char* name, bool b)
     json_object_object_add(parent, name, json_object_new_boolean(b));
 }
 
-static void serialize_string(struct json_object* parent, const char* name,
-                             const vec_char_t* str)
+static void serialize_string(struct json_object* parent, const char* name, const sds str)
 {
-    json_object_object_add(parent, name, json_object_new_string(str->data));
+    json_object_object_add(parent, name, json_object_new_string(str));
 }
 
 static void serialize_color(struct json_object* parent, const char* name,
@@ -325,7 +324,7 @@ static void serialize_vec(struct json_object* parent, const char* name, Vec2 vec
 static void serialize_item_to_array(struct json_object* parent, Item* item)
 {
     struct json_object* jitem = json_object_new_object();
-    serialize_string(jitem, "name", &item->name);
+    serialize_string(jitem, "name", item->name);
     serialize_int(jitem, "category", item->category);
 
     struct json_object* jsubitem = json_object_new_object();
@@ -353,7 +352,7 @@ static void serialize_item_to_object(struct json_object* parent, const char* nam
                                      Item* item)
 {
     struct json_object* jitem = json_object_new_object();
-    serialize_string(jitem, "name", &item->name);
+    serialize_string(jitem, "name", item->name);
     serialize_int(jitem, "category", item->category);
 
     struct json_object* jsubitem = json_object_new_object();
@@ -395,7 +394,7 @@ static struct json_object* serialize_actor(Actor* actor)
     serialize_vec(jactor, "pos", actor->pos);
     serialize_int(jactor, "symbol", (int)actor->symbol);
     serialize_color(jactor, "color", actor->color);
-    serialize_string(jactor, "name", &actor->name);
+    serialize_string(jactor, "name", actor->name);
     serialize_int(jactor, "hp", actor->hp);
     serialize_int(jactor, "vision_radius", actor->vision_radius);
     serialize_inventory(jactor, "inventory", &actor->inventory);
