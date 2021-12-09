@@ -1,4 +1,5 @@
 #include "inventory.h"
+#include "sds.h"
 
 Item* inv_find_item(Inventory* inv, int item_id)
 {
@@ -47,11 +48,7 @@ Item inv_construct_item(char* name, ItemCategory category, void* subitem)
 {
     static int id = 0;
 
-    vec_char_t name_v;
-    vec_init(&name_v);
-    vec_pusharr(&name_v, name, strlen(name));
-
-    Item item = {name_v, category, subitem, false, id};
+    Item item = {sdsnew(name), category, subitem, false, id};
     id++;
 
     return item;

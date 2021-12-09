@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "vec.h"
+#include "sds.h"
 
 typedef enum
 {
@@ -12,7 +13,7 @@ typedef enum
 
 typedef struct
 {
-    vec_char_t name;
+    sds name;
     ItemCategory category;
     void* item;
     bool equipped;

@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "map.h"
+#include "sds.h"
 #include "symbols.h"
 #include "actor.h"
 #include "pathfinding.h"
@@ -54,11 +55,7 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         Item* weapon = inv_construct_add_item(&inv, "Sword", ITEM_WEAPON, sword);
         inv_equip_item(&inv, weapon->id);
 
-        char name_arr[7];
-        sprintf(name_arr, "Enemy%d", enemy_id);
-        vec_char_t name;
-        vec_init(&name);
-        vec_pusharr(&name, name_arr, 7);
+        sds name = sdscatprintf(sdsempty(), "Enemy%d", enemy_id);
 
         // clang-format off
         Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 8, inv, true};
