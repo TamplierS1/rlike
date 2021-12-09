@@ -107,6 +107,7 @@ static bool deserialize_string(struct json_object* parent, const char* name,
     vec_init(out_string);
     const char* string = json_object_get_string(jstring);
     vec_pusharr(out_string, string, strlen(string));
+    // TODO: this is not needed. Remove it.
     vec_push(out_string, '\0');
 
     return result;
