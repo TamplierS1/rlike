@@ -48,12 +48,10 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         if (enemies_spawned >= map->num_enemies)
             return;
 
-        ItemWeapon* sword = malloc(sizeof(ItemWeapon));
-        sword->dmg = 10;
-
         Inventory inv = inv_create_inventory();
-        Item* weapon = inv_construct_add_item(&inv, "Sword", ITEM_WEAPON, sword);
-        inv_equip_item(&inv, weapon->id);
+        Item weapon = item_spawn_item("Sword");
+        inv_add_item(&inv, &weapon);
+        inv_equip_item(&inv, weapon.id);
 
         sds name = sdscatprintf(sdsempty(), "Enemy%d", enemy_id);
 

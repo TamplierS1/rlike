@@ -44,25 +44,10 @@ Inventory inv_create_inventory()
     return inv;
 }
 
-Item inv_construct_item(char* name, ItemCategory category, void* subitem)
-{
-    static int id = 0;
-
-    Item item = {sdsnew(name), category, subitem, false, id};
-    id++;
-
-    return item;
-}
-
-Item* inv_construct_add_item(Inventory* inv, char* name, ItemCategory category,
-                             void* subitem)
-{
-    Item item = inv_construct_item(name, category, subitem);
-    vec_push(&inv->items, item);
-    return inv_find_item(inv, item.id);
-}
-
 void inv_add_item(Inventory* inv, Item* item)
 {
+    if (inv_find_item(inv, item->id) != NULL)
+        return;
+
     vec_push(&inv->items, *item);
 }
