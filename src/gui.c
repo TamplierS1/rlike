@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "libtcod/color.h"
 #include "libtcod/console.h"
+#include "sds.h"
 
 static Actor* g_engaged_enemy = NULL;
 // I can't just use `Actor.is_alive` because once
@@ -12,6 +13,7 @@ static Actor* g_engaged_enemy = NULL;
 // to an enemy that is not NULL, which will cause the gui to
 // draw that enemy's stats.
 static bool g_is_enemy_alive = false;
+
 static bool g_display_inventory = false;
 static int g_selected_inv_entry = 0;
 
@@ -100,8 +102,10 @@ void gui_on_event(Event* event)
         }
         case EVENT_DEATH:
         {
-            // TODO: fix the crash that happens when the player dies.
             EventDeath* event_death = (EventDeath*)(event->data);
+            if (g_engaged_enemy == NULL)
+                break;
+
             if (event_death->dead_actor->id == g_engaged_enemy->id)
                 g_is_enemy_alive = false;
             break;

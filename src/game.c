@@ -100,6 +100,9 @@ static void generate_map()
 
 static void player_attack_or_move(SDL_Keycode prev_key, Vec2 dir)
 {
+    if (!find_player()->is_alive)
+        return;
+
     if (prev_key == SDLK_b)
     {
         Vec2 enemy_pos = vec2(find_player()->pos.x + dir.x, find_player()->pos.y + dir.y);
@@ -121,7 +124,8 @@ static void clear_dead_enemies()
 {
     for (int i = 0; i < g_game.actors.length; i++)
     {
-        if (!g_game.actors.data[i].is_alive)
+        if (!g_game.actors.data[i].is_alive &&
+            g_game.actors.data[i].id != g_game.player_id)
         {
             EventDeath event_death = {&g_game.actors.data[i]};
             Event event = {EVENT_DEATH, &event_death};
@@ -307,7 +311,8 @@ void update()
                 {
                     bool was_key_used =
                         gui_handle_input(event.key.keysym, &find_player()->inventory);
-                    if (!was_key_used && handle_input(event.key.keysym))
+                    if (!was_key_used && handle_input(event.key.keysym) &&
+                        find_player()->is_alive)
                     {
                         ai_update(&g_game);
                         map_update_fog_of_war(g_game.map, find_player()->pos,
