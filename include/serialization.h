@@ -5,6 +5,7 @@
 #include "actor.h"
 #include "error.h"
 
+Error srz_load_templates(const char* path, vec_item_t* out_templates);
 Error srz_load_map(const char* path, Map* out_map);
 Error srz_load_player(const char* path, Actor* out_actor);
 Error srz_load_enemies(const char* path, vec_actor_t* out_enemies);

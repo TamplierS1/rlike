@@ -9,6 +9,7 @@
 #include "SDL_scancode.h"
 #include "actor.h"
 #include "inventory.h"
+#include "item.h"
 #include "symbols.h"
 #include "event.h"
 #include "gui.h"
@@ -79,12 +80,12 @@ static bool load_map()
 
 static void generate_map()
 {
-    ItemWeapon* sword = malloc(sizeof(ItemWeapon));
-    sword->dmg = 10;
-
     Inventory inv = inv_create_inventory();
-    Item* weapon = inv_construct_add_item(&inv, "Sword", ITEM_WEAPON, sword);
-    inv_equip_item(&inv, weapon->id);
+    Item weapon = item_spawn_item("Sword");
+    inv_add_item(&inv, &weapon);
+    inv_equip_item(&inv, weapon.id);
+    weapon = item_spawn_item("Dagger");
+    inv_add_item(&inv, &weapon);
 
     Actor player = {0,   {0, 0}, PLAYER, PLAYER_COLOR, sdsnew("Player"),
                     100, 12,     inv,    true};
@@ -274,6 +275,8 @@ void init()
     g_game.map = malloc(sizeof(Map));
     vec_init(&g_game.map->rooms);
     vec_init(&g_game.map->tiles);
+
+    item_load_items();
 
     if (!load_map())
     {

@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <dirent.h>
 
 #include <json.h>
 
 #include "SDL_sensor.h"
 #include "inventory.h"
+#include "item.h"
 #include "json_object.h"
 #include "json_object_private.h"
 #include "serialization.h"
@@ -364,6 +366,8 @@ static void serialize_item_to_object(struct json_object* parent, const char* nam
             serialize_int(jsubitem, "dmg", subitem->dmg);
             break;
         }
+        case ITEM_EMPTY:  // Don't serialize empty items.
+            return;
     }
     json_object_object_add(jitem, "item", jsubitem);
     serialize_bool(jitem, "equipped", item->equipped);
@@ -446,6 +450,52 @@ static struct json_object* serialize_map(Map* map)
     serialize_int(jmap, "num_enemies", map->num_enemies);
 
     return jmap;
+}
+
+Error srz_load_templates(const char* path, vec_item_t* out_templates)
+{
+    DIR* dir = opendir(path);
+    if (dir == NULL)
+    {
+        error(__FILE__, __func__, __LINE__, "failed to open directory %s", path);
+        closedir(dir);
+        return ERROR_FILE_IO;
+    }
+
+    struct dirent* dp;
+    while ((dp = readdir(dir)) != NULL)
+    {
+        if (strncmp(dp->d_name, "..", 2) == 0 || strncmp(dp->d_name, ".", 1) == 0)
+            continue;
+
+        struct json_object* jitem;
+
+        sds item_file_path = sdscat(sdscat(sdsnew(path), "/"), dp->d_name);
+        Error err = OK;
+        char* json_string = read_json_from_file(item_file_path, &err);
+        if (err != OK)
+        {
+            continue;
+        }
+        if (get_jobject_from_jstring(json_string, &jitem) != OK)
+        {
+            free(json_string);
+            continue;
+        }
+
+        free(json_string);
+
+        Item item;
+        if (!deserialize_item(jitem, &item))
+        {
+            error(__FILE__, __func__, __LINE__, "failed to load item from %s", path);
+            continue;
+        }
+        vec_push(out_templates, item);
+    }
+
+    closedir(dir);
+    return OK;
 }
 
 Error srz_load_map(const char* path, Map* out_map)
