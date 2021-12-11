@@ -10,6 +10,7 @@
 #include "actor.h"
 #include "inventory.h"
 #include "item.h"
+#include "log.h"
 #include "symbols.h"
 #include "event.h"
 #include "gui.h"
@@ -280,6 +281,8 @@ void init()
     vec_init(&g_game.map->rooms);
     vec_init(&g_game.map->tiles);
 
+    log_init();
+
     item_load_items();
 
     if (!load_map())
@@ -290,6 +293,7 @@ void init()
     event_system_init();
     event_subscribe(actor_on_event);
     event_subscribe(gui_on_event);
+    event_subscribe(log_on_event);
 
     ai_init();
 
@@ -309,6 +313,7 @@ void update()
             {
                 case SDL_KEYDOWN:
                 {
+                    // TODO: prevent the player from moving when the inventory is opened.
                     bool was_key_used =
                         gui_handle_input(event.key.keysym, &find_player()->inventory);
                     if (!was_key_used && handle_input(event.key.keysym) &&
@@ -334,6 +339,8 @@ void update()
 
 void end()
 {
+    log_end();
+
     srz_save_player(find_player(), "res/saves/player.json");
     remove_player();
     srz_save_map(g_game.map, "res/saves/map.json");
