@@ -43,6 +43,8 @@ void actor_attack(Actor* victim, Actor* attacker)
     {
         victim->hp -= ((ItemWeapon*)weapon->item)->dmg;
         if (victim->hp <= 0)
+            // TODO: send a death event here, otherwise we won't be able to log player's
+            // death.
             victim->is_alive = false;
     }
 }

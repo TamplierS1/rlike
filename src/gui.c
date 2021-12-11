@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "libtcod/color.h"
 #include "libtcod/console.h"
+#include "log.h"
 #include "sds.h"
 
 static Actor* g_engaged_enemy = NULL;
@@ -113,6 +114,27 @@ void gui_on_event(Event* event)
     }
 }
 
+static void draw_message_log(TCOD_Console* console)
+{
+    Vec2 frame_size = vec2(30, 12);
+    Vec2 frame_pos = vec2(console->w - frame_size.x, 0);
+
+    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Messages");
+
+    int entry_height = 1;
+    MessageLog* log = log_get_log();
+    for (int i = 0; i < log->messages.length; i++)
+    {
+        Vec2 entry_pos =
+            vec2(frame_pos.x + 1, frame_pos.y + frame_size.y - 2 - entry_height * i);
+        if (entry_pos.y <= frame_pos.y)
+            continue;
+        TCOD_console_printf_ex(console, entry_pos.x, entry_pos.y, TCOD_BKGND_SET,
+                               TCOD_LEFT, "%s",
+                               log->messages.data[log->messages.length - 1 - i]);
+    }
+}
+
 bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
 {
     bool was_used = false;
@@ -177,4 +199,6 @@ void gui_render(TCOD_Console* console, Actor* player)
             console, player,
             vec2(player_stats_pos.x, player_stats_pos.y + player_stats_size.y),
             player_stats_size.x);
+
+    draw_message_log(console);
 }
