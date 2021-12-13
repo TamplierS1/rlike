@@ -46,10 +46,11 @@ typedef struct
     int num_enemies;
 } Map;
 
+void map_init();
 // I can't include `actor.h` (it would cause a cyclic dependency),
 // so I have to use void* here.
 Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies);
-void map_free(Map* map);
+void map_end(Map* map);
 
 void map_update_fog_of_war(Map* map, Vec2 player_pos, int player_vision_radius);
 bool map_check_bounds(Map* map, Vec2 pos);

@@ -1,9 +1,9 @@
 {
-    "name": "Dagger",
+    "name": "Hammer",
     "id": -1,
     "category": 0,
     "item": {
-        "dmg": 6
+        "dmg": 14
     },
     "equipped": false
 }

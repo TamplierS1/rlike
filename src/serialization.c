@@ -452,7 +452,55 @@ static struct json_object* serialize_map(Map* map)
     return jmap;
 }
 
-Error srz_load_templates(const char* path, vec_item_t* out_templates)
+Error srz_load_enemy_templates(const char* path, vec_actor_t* out_templates)
+{
+    DIR* dir = opendir(path);
+    if (dir == NULL)
+    {
+        error(__FILE__, __func__, __LINE__, "failed to open directory %s", path);
+        closedir(dir);
+        return ERROR_FILE_IO;
+    }
+
+    struct dirent* dp;
+    while ((dp = readdir(dir)) != NULL)
+    {
+        if (strncmp(dp->d_name, "..", 2) == 0 || strncmp(dp->d_name, ".", 1) == 0)
+            continue;
+
+        struct json_object* jenemy;
+
+        sds enemy_file_path = sdscat(sdscat(sdsnew(path), "/"), dp->d_name);
+        Error err = OK;
+        char* json_string = read_json_from_file(enemy_file_path, &err);
+        if (err != OK)
+        {
+            continue;
+        }
+        if (get_jobject_from_jstring(json_string, &jenemy) != OK)
+        {
+            free(json_string);
+            continue;
+        }
+
+        free(json_string);
+
+        Actor enemy;
+        if (!deserialize_actor(jenemy, &enemy))
+        {
+            error(__FILE__, __func__, __LINE__,
+                  "failed to load the enemy template from %s", path);
+            return ERROR_JSON_DESERIALIZE;
+        }
+
+        vec_push(out_templates, enemy);
+    }
+
+    closedir(dir);
+    return OK;
+}
+
+Error srz_load_item_templates(const char* path, vec_item_t* out_templates)
 {
     DIR* dir = opendir(path);
     if (dir == NULL)
@@ -488,7 +536,8 @@ Error srz_load_templates(const char* path, vec_item_t* out_templates)
         Item item;
         if (!deserialize_item(jitem, &item))
         {
-            error(__FILE__, __func__, __LINE__, "failed to load item from %s", path);
+            error(__FILE__, __func__, __LINE__, "failed to load item template from %s",
+                  path);
             continue;
         }
         vec_push(out_templates, item);

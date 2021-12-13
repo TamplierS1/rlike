@@ -290,6 +290,7 @@ void init()
 
     item_load_items();
 
+    map_init();
     if (!load_map())
     {
         generate_map();
@@ -318,7 +319,6 @@ void update()
             {
                 case SDL_KEYDOWN:
                 {
-                    // TODO: prevent the player from moving when the inventory is opened.
                     bool was_key_used =
                         gui_handle_input(event.key.keysym, &find_player()->inventory);
                     if (!was_key_used && handle_input(event.key.keysym) &&
@@ -364,5 +364,5 @@ void end()
 
     vec_deinit(&g_game.actors);
     event_system_deinit();
-    map_free(g_game.map);
+    map_end(g_game.map);
 }
