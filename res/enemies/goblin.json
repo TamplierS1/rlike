@@ -1,0 +1,30 @@
+{
+    "id": -1,
+    "pos": {
+        "x": -1,
+        "y": -1
+    },
+    "symbol": 37,
+    "color": {
+        "r": 137,
+        "g": 29,
+        "b": 29
+    },
+    "name": "goblin",
+    "hp": 30,
+    "vision_radius": 8,
+    "inventory": {
+        "items": [
+            {
+                "name": "Sword",
+                "category": 0,
+                "item": {
+                    "dmg": 10
+                },
+                "equipped": true,
+                "id": 2
+            }
+        ]
+    },
+    "is_alive": true
+}

@@ -3,10 +3,12 @@
 
 #include "map.h"
 #include "sds.h"
+#include "serialization.h"
 #include "symbols.h"
 #include "actor.h"
 #include "pathfinding.h"
 #include "inventory.h"
+#include "vec.h"
 
 static int rand_int(int min, int max)
 {
@@ -36,10 +38,51 @@ static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
     return true;
 }
 
-static void spawn_enemies(Map* map, vec_actor_t* enemies)
+static vec_actor_t* enemy_templates()
+{
+    static vec_actor_t vec;
+    return &vec;
+}
+
+static Actor* find_enemy_template(sds name)
+{
+    vec_actor_t* temps = enemy_templates();
+    for (int i = 0; i < temps->length; i++)
+    {
+        if (memcmp(temps->data[i].name, name, sdslen(temps->data[i].name)) == 0)
+            return &temps->data[i];
+    }
+    return NULL;
+}
+
+static void spawn_enemy(sds name, Vec2 pos, vec_actor_t* out_enemies)
 {
     static int enemy_id = 1;
 
+    Actor* template = find_enemy_template(name);
+    if (template == NULL)
+    {
+        error(__FILE__, __func__, __LINE__, "failed to spawn enemy %s at (%d, %d)", name,
+              pos.x, pos.y);
+        return;
+    }
+
+    Inventory inv = inv_create_inventory();
+    for (int i = 0; i < template->inventory.items.length; i++)
+    {
+        Item item = item_spawn_item(template->inventory.items.data[i].name);
+        item.equipped = template->inventory.items.data[i].equipped;
+        inv_add_item(&inv, &item);
+    }
+
+    Actor enemy = {enemy_id++,   pos,          template->symbol,        template->color,
+                   sdsdup(name), template->hp, template->vision_radius, inv,
+                   true};
+    vec_push(out_enemies, enemy);
+}
+
+static void spawn_enemies(Map* map, vec_actor_t* out_enemies)
+{
     int enemies_spawned = 0;
     int j;
     Room room;
@@ -48,17 +91,7 @@ static void spawn_enemies(Map* map, vec_actor_t* enemies)
         if (enemies_spawned >= map->num_enemies)
             return;
 
-        Inventory inv = inv_create_inventory();
-        Item weapon = item_spawn_item("Sword");
-        inv_add_item(&inv, &weapon);
-        inv_equip_item(&inv, weapon.id);
-
-        sds name = sdscatprintf(sdsempty(), "Enemy%d", enemy_id);
-
-        // clang-format off
-        Actor enemy = {enemy_id++, room.center, ENEMY, ENEMY_COLOR, name, 30, 8, inv, true};
-        // clang-format on
-        vec_push(enemies, enemy);
+        spawn_enemy(sdsnew("goblin"), room.center, out_enemies);
         enemies_spawned++;
     }
 }
@@ -172,6 +205,12 @@ static Vec2 dig_rooms(Map* map)
     return spawn_pos;
 }
 
+void map_init()
+{
+    vec_init(enemy_templates());
+    srz_load_enemy_templates("res/enemies", enemy_templates());
+}
+
 Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
 {
     Map* map = malloc(sizeof(Map));
@@ -191,8 +230,9 @@ Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
     return map;
 }
 
-void map_free(Map* map)
+void map_end(Map* map)
 {
+    vec_deinit(enemy_templates());
     vec_deinit(&map->rooms);
     vec_deinit(&map->tiles);
     free(map);

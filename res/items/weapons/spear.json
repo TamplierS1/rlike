@@ -1,8 +1,8 @@
 {
-    "name": "Sword",
+    "name": "Spear",
     "category": 0,
     "item": {
-        "dmg": 10
+        "dmg": 12
     },
     "equipped": false,
     "id": -1

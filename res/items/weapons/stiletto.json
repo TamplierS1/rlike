@@ -1,8 +1,8 @@
 {
-    "name": "Sword",
+    "name": "Stiletto",
     "category": 0,
     "item": {
-        "dmg": 10
+        "dmg": 8
     },
     "equipped": false,
     "id": -1

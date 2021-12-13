@@ -152,6 +152,11 @@ void gui_on_event(Event* event)
 bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
 {
     bool was_used = false;
+
+    // Prevent the player from doing anything when the inventory is opened.
+    if (g_display_inventory)
+        was_used = true;
+
     switch (key.sym)
     {
         case SDLK_w:

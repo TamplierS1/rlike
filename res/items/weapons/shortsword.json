@@ -1,8 +1,8 @@
 {
-    "name": "Sword",
+    "name": "Shortsword",
     "category": 0,
     "item": {
-        "dmg": 10
+        "dmg": 9
     },
     "equipped": false,
     "id": -1
