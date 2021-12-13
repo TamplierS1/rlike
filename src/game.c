@@ -125,13 +125,14 @@ static void clear_dead_enemies()
 {
     for (int i = 0; i < g_game.actors.length; i++)
     {
-        if (!g_game.actors.data[i].is_alive &&
-            g_game.actors.data[i].id != g_game.player_id)
+        if (!g_game.actors.data[i].is_alive)
         {
             EventDeath event_death = {&g_game.actors.data[i]};
             Event event = {EVENT_DEATH, &event_death};
             event_send(&event);
-            vec_swapsplice(&g_game.actors, i, 1);
+
+            if (g_game.actors.data[i].id != g_game.player_id)
+                vec_swapsplice(&g_game.actors, i, 1);
         }
     }
 }
@@ -221,6 +222,10 @@ static bool handle_input(SDL_Keysym key)
             break;
         case SDLK_d:
             player_attack_or_move(prev_key, vec2(1, 0));
+            break;
+        case SDLK_r:
+            if (!find_player()->is_alive)
+                generate_map();
             break;
         case SDLK_ESCAPE:
             g_game.quit = true;
@@ -322,7 +327,6 @@ void update()
                         ai_update(&g_game);
                         map_update_fog_of_war(g_game.map, find_player()->pos,
                                               g_game.player_vision_radius);
-                        clear_dead_enemies();
                     }
                     break;
                 }
@@ -332,6 +336,7 @@ void update()
             }
         }
 
+        clear_dead_enemies();
         g_game.camera.target = find_player()->pos;
         render();
     }
