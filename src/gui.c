@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "libtcod/color.h"
 #include "libtcod/console.h"
+#include "libtcod/console_printing.h"
 #include "log.h"
 #include "sds.h"
 
@@ -17,6 +18,9 @@ static bool g_is_enemy_alive = false;
 
 static bool g_display_inventory = false;
 static int g_selected_inv_entry = 0;
+
+static int g_player_id = -1;
+static bool g_display_restart_screen = false;
 
 static void check_inventory_selection_bounds(Inventory* player_inventory)
 {
@@ -85,6 +89,35 @@ static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 fram
     }
 }
 
+static void draw_message_log(TCOD_Console* console)
+{
+    Vec2 frame_size = vec2(30, 12);
+    Vec2 frame_pos = vec2(console->w - frame_size.x, 0);
+
+    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Messages");
+
+    int entry_height = 2;
+    MessageLog* log = log_get_log();
+    for (int i = 0; i < log->messages.length; i++)
+    {
+        Vec2 entry_pos =
+            vec2(frame_pos.x + 1, frame_pos.y + frame_size.y - 2 - entry_height * i);
+        if (entry_pos.y <= frame_pos.y)
+            continue;
+        TCOD_console_printf_ex(console, entry_pos.x, entry_pos.y, TCOD_BKGND_SET,
+                               TCOD_LEFT, "%s",
+                               log->messages.data[log->messages.length - 1 - i]);
+    }
+}
+
+static void draw_restart_screen(TCOD_Console* console)
+{
+    sds msg = sdsnew("Press R to restart");
+    Vec2 pos = vec2(console->w / 2 - sdslen(msg) / 2, console->h / 2);
+    TCOD_console_clear(console);
+    TCOD_console_printf_ex(console, pos.x, pos.y, TCOD_BKGND_SET, TCOD_LEFT, "%s", msg);
+}
+
 void gui_on_event(Event* event)
 {
     switch (event->type)
@@ -104,34 +137,15 @@ void gui_on_event(Event* event)
         case EVENT_DEATH:
         {
             EventDeath* event_death = (EventDeath*)(event->data);
-            if (g_engaged_enemy == NULL)
-                break;
 
-            if (event_death->dead_actor->id == g_engaged_enemy->id)
+            if (event_death->dead_actor->id == g_player_id)
+                g_display_restart_screen = true;
+            else if (g_engaged_enemy != NULL &&
+                     event_death->dead_actor->id == g_engaged_enemy->id)
                 g_is_enemy_alive = false;
+
             break;
         }
-    }
-}
-
-static void draw_message_log(TCOD_Console* console)
-{
-    Vec2 frame_size = vec2(30, 12);
-    Vec2 frame_pos = vec2(console->w - frame_size.x, 0);
-
-    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Messages");
-
-    int entry_height = 1;
-    MessageLog* log = log_get_log();
-    for (int i = 0; i < log->messages.length; i++)
-    {
-        Vec2 entry_pos =
-            vec2(frame_pos.x + 1, frame_pos.y + frame_size.y - 2 - entry_height * i);
-        if (entry_pos.y <= frame_pos.y)
-            continue;
-        TCOD_console_printf_ex(console, entry_pos.x, entry_pos.y, TCOD_BKGND_SET,
-                               TCOD_LEFT, "%s",
-                               log->messages.data[log->messages.length - 1 - i]);
     }
 }
 
@@ -153,6 +167,11 @@ bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
                 g_selected_inv_entry += 1;
                 was_used = true;
             }
+            break;
+        case SDLK_r:
+            g_display_restart_screen = false;
+            // Let the gameplay side process this keypress.
+            was_used = false;
             break;
         case SDLK_RETURN:
             if (g_display_inventory)
@@ -184,6 +203,7 @@ bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
 
 void gui_render(TCOD_Console* console, Actor* player)
 {
+    g_player_id = player->id;
     Vec2 player_stats_pos = vec2(0, 0);
     Vec2 player_stats_size = vec2(15, 5);
 
@@ -200,5 +220,7 @@ void gui_render(TCOD_Console* console, Actor* player)
             vec2(player_stats_pos.x, player_stats_pos.y + player_stats_size.y),
             player_stats_size.x);
 
-    draw_message_log(console);
+    if (g_display_restart_screen)
+        draw_restart_screen(console);
+    // draw_message_log(console);
 }
