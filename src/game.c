@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include <SDL.h>
+#include "mt19937ar.h"
 
 #include "SDL_events.h"
 #include "SDL_scancode.h"
@@ -299,7 +300,7 @@ void init()
 
     tcod_init();
 
-    srand(time(NULL));
+    init_genrand((unsigned long)clock());
 
     g_game.map = malloc(sizeof(Map));
     vec_init(&g_game.map->rooms);

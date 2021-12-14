@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "mt19937ar.h"
+
 #include "map.h"
 #include "sds.h"
 #include "serialization.h"
@@ -17,7 +19,7 @@ static int rand_int(int min, int max)
     min++;
     max++;
 
-    int result = rand() % max;
+    int result = genrand_int32() % max;
     if (result < min)
         return min - 1;
     else
@@ -98,14 +100,11 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
         int num_to_spawn =
             rand_int(map->num_enemies_each_room_min, map->num_enemies_each_room_max);
 
+        Room room = map->rooms.data[i];
         for (int j = 0; j < num_to_spawn; j++)
         {
-            Room room = map->rooms.data[i];
-            // TODO: enemies are always spawned at the edges of the room.
-            // I think this is caused by the random number generator.
-            // Find a better rng.
-            Vec2 pos = vec2(rand_int(room.pos.x + 1, room.pos.x + room.size.x),
-                            rand_int(room.pos.y + 1, room.pos.y + room.size.y));
+            Vec2 pos = vec2(room.pos.x + 1 + rand_int(0, room.size.x - 1),
+                            room.pos.y + 1 + rand_int(0, room.size.y - 1));
             int enemy_to_spawn = rand_int(0, enemy_templates()->length - 1);
 
             spawn_enemy(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies);

@@ -12,11 +12,19 @@ set(SDL2_SHARED OFF)
 set(DISABLE_WERROR ON)
 set(DISABLE_EXTRA_LIBST ON)
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sds/sds.h
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sds/sdsalloc.h
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sds/sds.c
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 add_executable(rlike "")
 add_subdirectory(src)
 add_subdirectory(third_party/libtcod)
 add_subdirectory(third_party/SDL)
 add_subdirectory(third_party/json-c)
+add_subdirectory(third_party/mt19937)
 
 set(C_COMPILE_FLAGS)
 set(C_LINK_FLAGS)
@@ -32,7 +40,8 @@ list(APPEND C_INCLUDE_DIRS
         "include"
         "third_party/libtcod/src"
         "third_party/SDL/include"
-        "third_party/json-c/build")
+        "third_party/json-c/build"
+        "third_party/mt19937")
 
 list(APPEND C_LINK_OPTIONS PRIVATE
         -L"third_party/SDL/build"
