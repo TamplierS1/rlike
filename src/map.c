@@ -12,11 +12,16 @@
 
 static int rand_int(int min, int max)
 {
+    // To avoid division by 0 we add 1 now
+    // and subtract it later.
+    min++;
+    max++;
+
     int result = rand() % max;
     if (result < min)
-        return min;
+        return min - 1;
     else
-        return result;
+        return result - 1;
 }
 
 static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
@@ -81,19 +86,33 @@ static void spawn_enemy(sds name, Vec2 pos, vec_actor_t* out_enemies)
     vec_push(out_enemies, enemy);
 }
 
-static void spawn_enemies(Map* map, vec_actor_t* out_enemies)
+static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_pos)
 {
-    int enemies_spawned = 0;
-    int j;
-    Room room;
-    vec_foreach(&map->rooms, room, j)
+    int num_spawned = 0;
+    for (int i = 0; i < map->rooms.length; i++)
     {
-        if (enemies_spawned >= map->num_enemies)
-            return;
+        // Don't spawn enemies with the player.
+        if (vec2_equals(map->rooms.data[i].center, player_start_pos))
+            continue;
 
-        spawn_enemy(sdsnew("goblin"), room.center, out_enemies);
-        enemies_spawned++;
+        int num_to_spawn =
+            rand_int(map->num_enemies_each_room_min, map->num_enemies_each_room_max);
+
+        for (int j = 0; j < num_to_spawn; j++)
+        {
+            Room room = map->rooms.data[i];
+            // TODO: enemies are always spawned at the edges of the room.
+            // I think this is caused by the random number generator.
+            // Find a better rng.
+            Vec2 pos = vec2(rand_int(room.pos.x + 1, room.pos.x + room.size.x),
+                            rand_int(room.pos.y + 1, room.pos.y + room.size.y));
+            int enemy_to_spawn = rand_int(0, enemy_templates()->length - 1);
+
+            spawn_enemy(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies);
+            num_spawned++;
+        }
     }
+    map->num_enemies = num_spawned;
 }
 
 static void fill_map_with_walls(Map* map)
@@ -211,7 +230,7 @@ void map_init()
     srz_load_enemy_templates("res/enemies", enemy_templates());
 }
 
-Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
+Map* map_generate(Vec2* out_player_start_pos, void* out_enemies)
 {
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
@@ -220,12 +239,14 @@ Map* map_generate(Vec2* out_rogue_start_pos, void* out_enemies)
     map->room_density = 70;
     map->room_size_min = vec2(7, 7);
     map->room_size_max = vec2(20, 20);
-    map->num_enemies = 6;
+    map->num_enemies_each_room_min = 1;
+    map->num_enemies_each_room_max = 3;
+    map->num_enemies = 0;
     vec_reserve(&map->tiles, map->size.x * map->size.y);
 
     fill_map_with_walls(map);
-    *out_rogue_start_pos = dig_rooms(map);
-    spawn_enemies(map, (vec_actor_t*)out_enemies);
+    *out_player_start_pos = dig_rooms(map);
+    spawn_enemies(map, (vec_actor_t*)out_enemies, *out_player_start_pos);
 
     return map;
 }

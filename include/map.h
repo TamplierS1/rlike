@@ -43,6 +43,9 @@ typedef struct
     int room_density;
     Vec2 room_size_min;
     Vec2 room_size_max;
+    int num_enemies_each_room_min;
+    int num_enemies_each_room_max;
+    int num_enemies_min;
     int num_enemies;
 } Map;
 

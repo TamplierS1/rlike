@@ -199,6 +199,10 @@ static bool deserialize_map(struct json_object* jmap, Map* out_map)
     deserialize_int(jmap, "room_density", &out_map->room_density);
     deserialize_vec(jmap, "room_size_min", &out_map->room_size_min);
     deserialize_vec(jmap, "room_size_max", &out_map->room_size_max);
+    deserialize_int(jmap, "num_enemies_each_room_min",
+                    &out_map->num_enemies_each_room_min);
+    deserialize_int(jmap, "num_enemies_each_room_max",
+                    &out_map->num_enemies_each_room_max);
     deserialize_int(jmap, "num_enemies", &out_map->num_enemies);
 
     return true;
@@ -447,6 +451,8 @@ static struct json_object* serialize_map(Map* map)
     serialize_int(jmap, "room_density", map->room_density);
     serialize_vec(jmap, "room_size_min", map->room_size_min);
     serialize_vec(jmap, "room_size_max", map->room_size_max);
+    serialize_int(jmap, "num_enemies_each_room_min", map->num_enemies_each_room_min);
+    serialize_int(jmap, "num_enemies_each_room_max", map->num_enemies_each_room_max);
     serialize_int(jmap, "num_enemies", map->num_enemies);
 
     return jmap;

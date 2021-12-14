@@ -10,13 +10,13 @@
         "g": 29,
         "b": 29
     },
-    "name": "goblin",
+    "name": "Goblin",
     "hp": 30,
     "vision_radius": 8,
     "inventory": {
         "items": [
             {
-                "name": "Sword",
+                "name": "Hammer",
                 "category": 0,
                 "item": {
                     "dmg": 10
