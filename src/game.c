@@ -65,7 +65,9 @@ static Vec2 apply_camera_to_position(Vec2 pos)
     return vec2(pos.x - g_game.camera.target.x + g_game.camera.offset.x,
                 pos.y - g_game.camera.target.y + g_game.camera.offset.y);
 }
+
 /*********** SAVING ***************/
+
 static bool load_map()
 {
     Actor player;
@@ -104,7 +106,7 @@ static void player_attack_or_move(SDL_Keycode prev_key, Vec2 dir)
     if (!find_player()->is_alive)
         return;
 
-    if (prev_key == SDLK_b)
+    if (prev_key == SDLK_f)
     {
         Vec2 enemy_pos = vec2(find_player()->pos.x + dir.x, find_player()->pos.y + dir.y);
         Actor* enemy = find_enemy_at(enemy_pos);
@@ -118,6 +120,17 @@ static void player_attack_or_move(SDL_Keycode prev_key, Vec2 dir)
     else
     {
         actor_move(g_game.map, &g_game.actors, find_player(), dir);
+    }
+}
+
+static void nuke_enemies()
+{
+    for (int i = 0; i < g_game.actors.length; i++)
+    {
+        g_game.actors.data[i].is_alive = false;
+        EventDeath event_death = {&g_game.actors.data[i]};
+        Event event = {EVENT_DEATH, &event_death};
+        event_send(&event);
     }
 }
 
@@ -208,7 +221,7 @@ static bool handle_input(SDL_Keysym key)
     switch (key.sym)
     {
         // 'b' means the player wants to attack.
-        case SDLK_b:
+        case SDLK_f:
             input_processed = false;
             break;
         case SDLK_w:
@@ -225,7 +238,13 @@ static bool handle_input(SDL_Keysym key)
             break;
         case SDLK_r:
             if (!find_player()->is_alive)
+            {
+                nuke_enemies();
                 generate_map();
+            }
+            break;
+        case SDLK_n:
+            nuke_enemies();
             break;
         case SDLK_ESCAPE:
             g_game.quit = true;
