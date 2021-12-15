@@ -196,14 +196,22 @@ static bool deserialize_map(struct json_object* jmap, Map* out_map)
     }
 
     deserialize_vec(jmap, "size", &out_map->size);
+
     deserialize_int(jmap, "room_density", &out_map->room_density);
     deserialize_vec(jmap, "room_size_min", &out_map->room_size_min);
     deserialize_vec(jmap, "room_size_max", &out_map->room_size_max);
+
     deserialize_int(jmap, "num_enemies_each_room_min",
                     &out_map->num_enemies_each_room_min);
     deserialize_int(jmap, "num_enemies_each_room_max",
                     &out_map->num_enemies_each_room_max);
     deserialize_int(jmap, "num_enemies", &out_map->num_enemies);
+
+    int wall_char, floor_char;
+    deserialize_int(jmap, "wall_char", &wall_char);
+    deserialize_int(jmap, "floor_char", &floor_char);
+    out_map->wall_char = wall_char;
+    out_map->floor_char = floor_char;
 
     return true;
 }
@@ -448,12 +456,17 @@ static struct json_object* serialize_map(Map* map)
     json_object_object_add(jmap, "rooms", rooms);
 
     serialize_vec(jmap, "size", map->size);
+
     serialize_int(jmap, "room_density", map->room_density);
     serialize_vec(jmap, "room_size_min", map->room_size_min);
     serialize_vec(jmap, "room_size_max", map->room_size_max);
+
     serialize_int(jmap, "num_enemies_each_room_min", map->num_enemies_each_room_min);
     serialize_int(jmap, "num_enemies_each_room_max", map->num_enemies_each_room_max);
     serialize_int(jmap, "num_enemies", map->num_enemies);
+
+    serialize_int(jmap, "wall_char", map->wall_char);
+    serialize_int(jmap, "floor_char", map->floor_char);
 
     return jmap;
 }

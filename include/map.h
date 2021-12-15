@@ -39,14 +39,20 @@ typedef struct
 {
     vec_tile_t tiles;
     vec_room_t rooms;
+
     Vec2 size;
+
     int room_density;
     Vec2 room_size_min;
     Vec2 room_size_max;
+
     int num_enemies_each_room_min;
     int num_enemies_each_room_max;
     int num_enemies_min;
     int num_enemies;
+
+    char wall_char;
+    char floor_char;
 } Map;
 
 void map_init();

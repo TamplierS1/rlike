@@ -12,6 +12,7 @@
     to easily construct JSON objects in C, output them as JSON formatted strings and parse JSON formatted strings back 
     into the C representation of JSON objects.
 - [sds](https://github.com/antirez/sds) - Simple Dynamic Strings library for C.
+- [mt19937](http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/emt19937ar.html) - a random number generator.
 
 ## Build
 
