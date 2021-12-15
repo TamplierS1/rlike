@@ -4,19 +4,19 @@
         "x": -1,
         "y": -1
     },
-    "symbol": 103,
+    "symbol": 114,
     "color": {
-        "r": 36,
-        "g": 71,
-        "b": 35 
+        "r": 68,
+        "g": 53,
+        "b": 33 
     },
-    "name": "Goblin",
-    "hp": 18,
-    "vision_radius": 6,
+    "name": "Rat",
+    "hp": 12,
+    "vision_radius": 4,
     "inventory": {
         "items": [
             {
-                "name": "Hammer",
+                "name": "Stiletto",
                 "category": 0,
                 "item": {
                     "dmg": 10

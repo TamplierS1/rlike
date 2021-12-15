@@ -14,14 +14,24 @@
 
 static int rand_int(int min, int max)
 {
-    // To avoid division by 0 we add 1 now
-    // and subtract it later.
+    // This is to avoid deleting by 0.
     min++;
     max++;
+    // genrand_int32 generates up to a certain number exclusively.
+    // So to include that number into generation we add one to max.
+    max++;
+
+    if (min < 0)
+    {
+        min -= min;
+        max -= min;
+    }
 
     int result = genrand_int32() % max;
     if (result < min)
         return min - 1;
+    else if (min < 0)
+        return result + min - 1;
     else
         return result - 1;
 }
@@ -103,8 +113,9 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
         Room room = map->rooms.data[i];
         for (int j = 0; j < num_to_spawn; j++)
         {
-            Vec2 pos = vec2(room.pos.x + 1 + rand_int(0, room.size.x - 1),
-                            room.pos.y + 1 + rand_int(0, room.size.y - 1));
+            Vec2 pos = vec2(
+                room.center.x + rand_int(-(room.size.x / 2 - 1), room.size.x / 2 - 1),
+                room.center.y + rand_int(-(room.size.y / 2 - 1), room.size.y / 2 - 1));
             int enemy_to_spawn = rand_int(0, enemy_templates()->length - 1);
 
             spawn_enemy(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies);
