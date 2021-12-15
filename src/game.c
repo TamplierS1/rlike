@@ -12,7 +12,6 @@
 #include "inventory.h"
 #include "item.h"
 #include "log.h"
-#include "symbols.h"
 #include "event.h"
 #include "gui.h"
 #include "error.h"
@@ -91,8 +90,8 @@ static void generate_map()
     weapon = item_spawn_item("Dagger");
     inv_add_item(&inv, &weapon);
 
-    Actor player = {0,   {0, 0}, PLAYER, PLAYER_COLOR, sdsnew("Player"),
-                    100, 12,     inv,    true};
+    Actor player = {0,  {0, 0}, '@', (TCOD_color_t){204, 194, 184}, sdsnew("Player"), 100,
+                    12, inv,    true};
 
     vec_init(&g_game.actors);
     g_game.map = map_generate(&player.pos, &g_game.actors);

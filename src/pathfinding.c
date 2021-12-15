@@ -1,5 +1,4 @@
 #include "pathfinding.h"
-#include "symbols.h"
 
 void path_cast_ray(Map* map, Vec2 begin, Vec2 end, void(edit_tile)(Tile*))
 {
@@ -18,7 +17,7 @@ void path_cast_ray(Map* map, Vec2 begin, Vec2 end, void(edit_tile)(Tile*))
 
         if (map_check_bounds(map, vec2(x0, y0)))
         {
-            if (map_tile(map, vec2(x0, y0))->symbol == WALL)
+            if (map_tile(map, vec2(x0, y0))->symbol == map->wall_char)
                 end_ray = true;
 
             edit_tile(map_tile(map, vec2(x0, y0)));
@@ -58,7 +57,7 @@ bool path_cast_ray_and_return(Map* map, Vec2 begin, Vec2 end, bool (*check)(Tile
 
         if (map_check_bounds(map, vec2(x0, y0)))
         {
-            if (map_tile(map, vec2(x0, y0))->symbol == WALL)
+            if (map_tile(map, vec2(x0, y0))->symbol == map->wall_char)
                 end_ray = true;
 
             if (check(map_tile(map, vec2(x0, y0))))

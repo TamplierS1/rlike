@@ -6,11 +6,17 @@
 #include "map.h"
 #include "sds.h"
 #include "serialization.h"
-#include "symbols.h"
 #include "actor.h"
 #include "pathfinding.h"
 #include "inventory.h"
 #include "vec.h"
+
+// clang-format off
+#define FLOOR_BACK_COLOR (TCOD_color_t){35, 35, 35}
+#define FLOOR_FORE_COLOR (TCOD_color_t){0, 0, 0}
+#define WALL_BACK_COLOR (TCOD_color_t){0, 0, 0}
+#define WALL_FORE_COLOR (TCOD_color_t){79, 73, 67}
+// clang-format on
 
 static int rand_int(int min, int max)
 {
@@ -45,7 +51,7 @@ static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
     {
         for (int x = begin.x; x < end.x; x++)
         {
-            if (map_tile(map, vec2(x, y))->symbol != WALL)
+            if (map_tile(map, vec2(x, y))->symbol != map->wall_char)
             {
                 return false;
             }
@@ -133,7 +139,7 @@ static void fill_map_with_walls(Map* map)
         {
             Tile tile = (Tile){
                 .pos = vec2(x, y),
-                .symbol = WALL,
+                .symbol = map->wall_char,
                 .is_walkable = false,
                 .is_visible = false,
                 .was_explored = false,
@@ -245,13 +251,20 @@ Map* map_generate(Vec2* out_player_start_pos, void* out_enemies)
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
     vec_init(&map->tiles);
+
     map->size = vec2(80, 80);
+
     map->room_density = 70;
     map->room_size_min = vec2(7, 7);
     map->room_size_max = vec2(20, 20);
+
     map->num_enemies_each_room_min = 1;
     map->num_enemies_each_room_max = 3;
     map->num_enemies = 0;
+
+    map->wall_char = '#';
+    map->floor_char = ' ';
+
     vec_reserve(&map->tiles, map->size.x * map->size.y);
 
     fill_map_with_walls(map);
