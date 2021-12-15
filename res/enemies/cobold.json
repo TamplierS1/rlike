@@ -4,19 +4,19 @@
         "x": -1,
         "y": -1
     },
-    "symbol": 103,
+    "symbol": 99,
     "color": {
-        "r": 36,
-        "g": 71,
-        "b": 35 
+        "r": 136,
+        "g": 62,
+        "b": 45
     },
-    "name": "Goblin",
-    "hp": 18,
-    "vision_radius": 6,
+    "name": "Cobold",
+    "hp": 21,
+    "vision_radius": 9,
     "inventory": {
         "items": [
             {
-                "name": "Hammer",
+                "name": "Spear",
                 "category": 0,
                 "item": {
                     "dmg": 10
