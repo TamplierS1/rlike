@@ -8,7 +8,7 @@
     "color": {
         "r": 36,
         "g": 71,
-        "b": 35 
+        "b": 35
     },
     "name": "Goblin",
     "hp": 18,
@@ -23,6 +23,15 @@
                 },
                 "equipped": true,
                 "id": 2
+            },
+            {
+                "name": "Breastplate",
+                "id": -1,
+                "category": 1,
+                "item": {
+                    "defence": 4
+                },
+                "equipped": true
             }
         ]
     },

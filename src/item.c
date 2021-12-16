@@ -22,7 +22,8 @@ static Item* find_template(sds name)
 
 void item_load_items()
 {
-    if (srz_load_item_templates("res/items/weapons", &g_item_templates) != OK)
+    if (srz_load_item_templates("res/items/weapons", &g_item_templates) != OK ||
+        srz_load_item_templates("res/items/armor", &g_item_templates) != OK)
     {
         fatal(__FILE__, __func__, __LINE__, "failed to load item templates");
     }
@@ -43,6 +44,9 @@ Item item_spawn_item(sds name)
     {
         case ITEM_WEAPON:
             subitem = malloc(sizeof(ItemWeapon));
+            break;
+        case ITEM_ARMOR:
+            subitem = malloc(sizeof(ItemArmor));
             break;
         default:
             fatal(__FILE__, __func__, __LINE__,

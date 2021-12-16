@@ -8,7 +8,7 @@
     "color": {
         "r": 68,
         "g": 53,
-        "b": 33 
+        "b": 33
     },
     "name": "Rat",
     "hp": 12,
@@ -19,10 +19,19 @@
                 "name": "Stiletto",
                 "category": 0,
                 "item": {
-                    "dmg": 10
+                    "dmg": 8
                 },
                 "equipped": true,
                 "id": 2
+            },
+            {
+                "name": "Breastplate",
+                "id": -1,
+                "category": 1,
+                "item": {
+                    "defence": 4
+                },
+                "equipped": true
             }
         ]
     },

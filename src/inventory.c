@@ -27,14 +27,14 @@ Item* inv_find_item_ex(Inventory* inv, ItemCategory category, bool is_equipped)
 
 void inv_equip_item(Inventory* inv, int item_id)
 {
+    Item* item = inv_find_item(inv, item_id);
     // Check if any of the items are equipped.
     for (int i = 0; i < inv->items.length; i++)
     {
-        if (inv->items.data[i].equipped)
+        if (inv->items.data[i].equipped && inv->items.data[i].category == item->category)
             return;
     }
 
-    Item* item = inv_find_item(inv, item_id);
     if (item != NULL)
         inv_find_item(inv, item_id)->equipped = true;
 }
@@ -59,7 +59,6 @@ void inv_add_item(Inventory* inv, Item* item)
     if (inv_find_item(inv, item->id) != NULL)
         return;
 
-    item->equipped = false;
     vec_push(&inv->items, *item);
 }
 

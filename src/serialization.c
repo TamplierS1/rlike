@@ -178,6 +178,14 @@ static bool deserialize_item(struct json_object* parent, Item* out_item)
             item.item = weapon;
             break;
         }
+        case ITEM_ARMOR:
+        {
+            ItemArmor* armor = malloc(sizeof(ItemArmor));
+            if (!deserialize_int(jsubitem, "defence", &armor->defence))
+                return false;
+            item.item = armor;
+            break;
+        }
         default:
             fatal(__FILE__, __func__, __LINE__,
                   "not all deserialization options were covered.");
@@ -351,6 +359,12 @@ static void serialize_item_to_array(struct json_object* parent, Item* item)
             serialize_int(jsubitem, "dmg", subitem->dmg);
             break;
         }
+        case ITEM_ARMOR:
+        {
+            ItemArmor* subitem = (ItemArmor*)item->item;
+            serialize_int(jsubitem, "defence", subitem->defence);
+            break;
+        }
         default:
             fatal(__FILE__, __func__, __LINE__,
                   "not all deserialization options were covered.");
@@ -377,6 +391,12 @@ static void serialize_item_to_object(struct json_object* parent, const char* nam
         {
             ItemWeapon* subitem = (ItemWeapon*)item->item;
             serialize_int(jsubitem, "dmg", subitem->dmg);
+            break;
+        }
+        case ITEM_ARMOR:
+        {
+            ItemArmor* subitem = (ItemArmor*)item->item;
+            serialize_int(jsubitem, "defence", subitem->defence);
             break;
         }
         case ITEM_EMPTY:  // Don't serialize empty items.

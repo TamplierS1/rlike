@@ -8,6 +8,7 @@
 typedef enum
 {
     ITEM_WEAPON,
+    ITEM_ARMOR,
     ITEM_EMPTY,
 } ItemCategory;
 
@@ -24,6 +25,11 @@ typedef struct
 {
     int dmg;
 } ItemWeapon;
+
+typedef struct
+{
+    int defence;
+} ItemArmor;
 
 typedef vec_t(Item) vec_item_t;
 
