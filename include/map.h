@@ -6,7 +6,9 @@
 #include "vec.h"
 #include <libtcod.h>
 
+#include "item.h"
 #include "vec2.h"
+#include "inventory.h"
 
 typedef struct
 {
@@ -23,6 +25,7 @@ typedef struct
     bool was_explored;
     TCOD_color_t back_color;
     TCOD_color_t fore_color;
+    Inventory items;
 } Tile;
 
 typedef struct

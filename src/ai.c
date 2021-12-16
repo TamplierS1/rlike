@@ -100,7 +100,6 @@ void ai_init()
 
 void ai_update(Game* game)
 {
-    // TODO: make so that enemies attack first and only then move.
-    update_paths(game);
     update_behaviour(game);
+    update_paths(game);
 }

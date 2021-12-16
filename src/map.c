@@ -154,7 +154,7 @@ static void fill_map_with_walls(Map* map)
 static void dig(Map* map, Vec2 pos)
 {
     *map_tile(map, pos) = (Tile){.pos = pos,
-                                 .symbol = FLOOR,
+                                 .symbol = map->floor_char,
                                  .is_walkable = true,
                                  .is_visible = false,
                                  .was_explored = false,

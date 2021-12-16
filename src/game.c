@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include <SDL.h>
+#include "libtcod/color.h"
 #include "mt19937ar.h"
 
 #include "SDL_events.h"
@@ -128,7 +129,7 @@ static void nuke_enemies()
     for (int i = 0; i < g_game.actors.length; i++)
     {
         g_game.actors.data[i].is_alive = false;
-        EventDeath event_death = {&g_game.actors.data[i]};
+        EventDeath event_death = {&g_game.actors.data[i], g_game.map};
         Event event = {EVENT_DEATH, &event_death};
         event_send(&event);
     }
@@ -140,7 +141,7 @@ static void clear_dead_enemies()
     {
         if (!g_game.actors.data[i].is_alive)
         {
-            EventDeath event_death = {&g_game.actors.data[i]};
+            EventDeath event_death = {&g_game.actors.data[i], g_game.map};
             Event event = {EVENT_DEATH, &event_death};
             event_send(&event);
 
@@ -180,6 +181,12 @@ static void draw_map()
             Tile* tile = map_tile(g_game.map, vec2(x, y));
             draw(tile->pos, tile->symbol, tile->fore_color, tile->back_color,
                  tile->is_visible, tile->was_explored);
+
+            if (tile->items.items.length > 0)
+            {
+                draw(tile->pos, '*', TCOD_darkest_green, tile->back_color,
+                     tile->is_visible, tile->was_explored);
+            }
         }
     }
 }
@@ -246,6 +253,18 @@ static bool handle_input(SDL_Keysym key)
         case SDLK_n:
             nuke_enemies();
             break;
+        case SDLK_g:
+        {
+            Actor* player = find_player();
+            Tile* tile = map_tile(g_game.map, player->pos);
+
+            if (tile->items.items.length > 0)
+            {
+                inv_add_item(&player->inventory, &tile->items.items.data[0]);
+                inv_remove_item(&tile->items, 0);
+            }
+            break;
+        }
         case SDLK_ESCAPE:
             g_game.quit = true;
             break;
@@ -319,6 +338,7 @@ void init()
     event_subscribe(actor_on_event);
     event_subscribe(gui_on_event);
     event_subscribe(log_on_event);
+    event_subscribe(inv_on_event);
 
     ai_init();
 

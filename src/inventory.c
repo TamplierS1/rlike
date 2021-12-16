@@ -1,5 +1,8 @@
-#include "inventory.h"
 #include "sds.h"
+
+#include "inventory.h"
+#include "map.h"
+#include "actor.h"
 
 Item* inv_find_item(Inventory* inv, int item_id)
 {
@@ -24,6 +27,13 @@ Item* inv_find_item_ex(Inventory* inv, ItemCategory category, bool is_equipped)
 
 void inv_equip_item(Inventory* inv, int item_id)
 {
+    // Check if any of the items are equipped.
+    for (int i = 0; i < inv->items.length; i++)
+    {
+        if (inv->items.data[i].equipped)
+            return;
+    }
+
     Item* item = inv_find_item(inv, item_id);
     if (item != NULL)
         inv_find_item(inv, item_id)->equipped = true;
@@ -49,5 +59,36 @@ void inv_add_item(Inventory* inv, Item* item)
     if (inv_find_item(inv, item->id) != NULL)
         return;
 
+    item->equipped = false;
     vec_push(&inv->items, *item);
+}
+
+void inv_remove_item(Inventory* inv, int idx)
+{
+    if (inv->items.length > idx)
+        vec_swapsplice(&inv->items, idx, 1);
+}
+
+void inv_on_event(Event* event)
+{
+    switch (event->type)
+    {
+        case EVENT_DEATH:
+        {
+            EventDeath* event_death = ((EventDeath*)event->data);
+            Map* map = event_death->map;
+
+            if (event_death->dead_actor->inventory.items.length == 0)
+                break;
+
+            // TODO: its not random. It needs to be.
+            int idx = 0;
+            Item random_item = event_death->dead_actor->inventory.items.data[idx];
+            inv_add_item(&map_tile(map, event_death->dead_actor->pos)->items,
+                         &random_item);
+            break;
+        }
+        default:
+            break;
+    }
 }

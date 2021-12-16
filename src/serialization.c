@@ -152,70 +152,6 @@ static bool deserialize_vec(struct json_object* parent, const char* name, Vec2* 
     return true;
 }
 
-static bool deserialize_map(struct json_object* jmap, Map* out_map)
-{
-    if (!deserialize_vec(jmap, "size", &out_map->size))
-        return false;
-
-    struct json_object* jtiles;
-    if (!json_object_object_get_ex(jmap, "tiles", &jtiles))
-        return false;
-    for (size_t i = 0; i < json_object_array_length(jtiles); i++)
-    {
-        struct json_object* jtile = json_object_array_get_idx(jtiles, i);
-
-        Tile tile;
-        int symbol = 0;
-        if (!deserialize_vec(jtile, "pos", &tile.pos) ||
-            !deserialize_int(jtile, "symbol", &symbol) ||
-            !deserialize_bool(jtile, "is_walkable", &tile.is_walkable) ||
-            !deserialize_bool(jtile, "is_visible", &tile.is_visible) ||
-            !deserialize_bool(jtile, "was_explored", &tile.was_explored) ||
-            !deserialize_color(jtile, "fore_color", &tile.fore_color) ||
-            !deserialize_color(jtile, "back_color", &tile.back_color))
-            return false;
-        tile.symbol = (char)symbol;
-
-        vec_push(&out_map->tiles, tile);
-    }
-
-    struct json_object* jrooms;
-    if (!json_object_object_get_ex(jmap, "rooms", &jrooms))
-        return false;
-    for (size_t i = 0; i < json_object_array_length(jrooms); i++)
-    {
-        struct json_object* jroom = json_object_array_get_idx(jrooms, i);
-
-        Room room;
-        if (!deserialize_vec(jroom, "pos", &room.pos) ||
-            !deserialize_vec(jroom, "size", &room.size) ||
-            !deserialize_vec(jroom, "center", &room.center))
-            return false;
-
-        vec_push(&out_map->rooms, room);
-    }
-
-    deserialize_vec(jmap, "size", &out_map->size);
-
-    deserialize_int(jmap, "room_density", &out_map->room_density);
-    deserialize_vec(jmap, "room_size_min", &out_map->room_size_min);
-    deserialize_vec(jmap, "room_size_max", &out_map->room_size_max);
-
-    deserialize_int(jmap, "num_enemies_each_room_min",
-                    &out_map->num_enemies_each_room_min);
-    deserialize_int(jmap, "num_enemies_each_room_max",
-                    &out_map->num_enemies_each_room_max);
-    deserialize_int(jmap, "num_enemies", &out_map->num_enemies);
-
-    int wall_char, floor_char;
-    deserialize_int(jmap, "wall_char", &wall_char);
-    deserialize_int(jmap, "floor_char", &floor_char);
-    out_map->wall_char = wall_char;
-    out_map->floor_char = floor_char;
-
-    return true;
-}
-
 static bool deserialize_item(struct json_object* parent, Item* out_item)
 {
     Item item;
@@ -274,6 +210,71 @@ static bool deserialize_inventory(struct json_object* parent, const char* name,
 
         inv_add_item(out_inv, &item);
     }
+
+    return true;
+}
+
+static bool deserialize_map(struct json_object* jmap, Map* out_map)
+{
+    if (!deserialize_vec(jmap, "size", &out_map->size))
+        return false;
+
+    struct json_object* jtiles;
+    if (!json_object_object_get_ex(jmap, "tiles", &jtiles))
+        return false;
+    for (size_t i = 0; i < json_object_array_length(jtiles); i++)
+    {
+        struct json_object* jtile = json_object_array_get_idx(jtiles, i);
+
+        Tile tile;
+        int symbol = 0;
+        if (!deserialize_vec(jtile, "pos", &tile.pos) ||
+            !deserialize_int(jtile, "symbol", &symbol) ||
+            !deserialize_bool(jtile, "is_walkable", &tile.is_walkable) ||
+            !deserialize_bool(jtile, "is_visible", &tile.is_visible) ||
+            !deserialize_bool(jtile, "was_explored", &tile.was_explored) ||
+            !deserialize_color(jtile, "fore_color", &tile.fore_color) ||
+            !deserialize_color(jtile, "back_color", &tile.back_color) ||
+            !deserialize_inventory(jtile, "items", &tile.items))
+            return false;
+        tile.symbol = (char)symbol;
+
+        vec_push(&out_map->tiles, tile);
+    }
+
+    struct json_object* jrooms;
+    if (!json_object_object_get_ex(jmap, "rooms", &jrooms))
+        return false;
+    for (size_t i = 0; i < json_object_array_length(jrooms); i++)
+    {
+        struct json_object* jroom = json_object_array_get_idx(jrooms, i);
+
+        Room room;
+        if (!deserialize_vec(jroom, "pos", &room.pos) ||
+            !deserialize_vec(jroom, "size", &room.size) ||
+            !deserialize_vec(jroom, "center", &room.center))
+            return false;
+
+        vec_push(&out_map->rooms, room);
+    }
+
+    deserialize_vec(jmap, "size", &out_map->size);
+
+    deserialize_int(jmap, "room_density", &out_map->room_density);
+    deserialize_vec(jmap, "room_size_min", &out_map->room_size_min);
+    deserialize_vec(jmap, "room_size_max", &out_map->room_size_max);
+
+    deserialize_int(jmap, "num_enemies_each_room_min",
+                    &out_map->num_enemies_each_room_min);
+    deserialize_int(jmap, "num_enemies_each_room_max",
+                    &out_map->num_enemies_each_room_max);
+    deserialize_int(jmap, "num_enemies", &out_map->num_enemies);
+
+    int wall_char, floor_char;
+    deserialize_int(jmap, "wall_char", &wall_char);
+    deserialize_int(jmap, "floor_char", &floor_char);
+    out_map->wall_char = wall_char;
+    out_map->floor_char = floor_char;
 
     return true;
 }
@@ -437,6 +438,7 @@ static struct json_object* serialize_map(Map* map)
         serialize_bool(jtile, "was_explored", tile->was_explored);
         serialize_color(jtile, "fore_color", tile->fore_color);
         serialize_color(jtile, "back_color", tile->back_color);
+        serialize_inventory(jtile, "items", &tile->items);
 
         json_object_array_add(tiles, jtile);
     }
