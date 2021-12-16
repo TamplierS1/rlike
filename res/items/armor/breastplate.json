@@ -1,0 +1,9 @@
+{
+    "name": "Breastplate",
+    "id": -1,
+    "category": 1,
+    "item": {
+        "defence": 4
+    },
+    "equipped": true
+}

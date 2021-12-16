@@ -88,8 +88,10 @@ static void generate_map()
     Item weapon = item_spawn_item("Sword");
     inv_add_item(&inv, &weapon);
     inv_equip_item(&inv, weapon.id);
-    weapon = item_spawn_item("Dagger");
-    inv_add_item(&inv, &weapon);
+
+    Item armor = item_spawn_item("Breastplate");
+    inv_add_item(&inv, &armor);
+    inv_equip_item(&inv, armor.id);
 
     Actor player = {0,  {0, 0}, '@', (TCOD_color_t){204, 194, 184}, sdsnew("Player"), 100,
                     12, inv,    true};
@@ -261,6 +263,7 @@ static bool handle_input(SDL_Keysym key)
             if (tile->items.items.length > 0)
             {
                 inv_add_item(&player->inventory, &tile->items.items.data[0]);
+                inv_unequip_item(&player->inventory, tile->items.items.data[0].id);
                 inv_remove_item(&tile->items, 0);
             }
             break;

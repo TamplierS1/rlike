@@ -39,9 +39,13 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 void actor_attack(Actor* victim, Actor* attacker)
 {
     Item* weapon = inv_find_item_ex(&attacker->inventory, ITEM_WEAPON, true);
+    Item* armor = inv_find_item_ex(&victim->inventory, ITEM_ARMOR, true);
     if (weapon != NULL)
     {
         victim->hp -= ((ItemWeapon*)weapon->item)->dmg;
+        if (armor != NULL)
+            victim->hp += ((ItemArmor*)armor->item)->defence;
+
         if (victim->hp <= 0)
             victim->is_alive = false;
     }

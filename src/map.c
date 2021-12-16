@@ -96,6 +96,7 @@ static void spawn_enemy(sds name, Vec2 pos, vec_actor_t* out_enemies)
         Item item = item_spawn_item(template->inventory.items.data[i].name);
         item.equipped = template->inventory.items.data[i].equipped;
         inv_add_item(&inv, &item);
+        inv_equip_item(&inv, item.id);
     }
 
     Actor enemy = {enemy_id++,   pos,          template->symbol,        template->color,
@@ -145,6 +146,7 @@ static void fill_map_with_walls(Map* map)
                 .was_explored = false,
                 .back_color = WALL_BACK_COLOR,
                 .fore_color = WALL_FORE_COLOR,
+                .items = inv_create_inventory(),
             };
             vec_push(&map->tiles, tile);
         }
@@ -153,13 +155,16 @@ static void fill_map_with_walls(Map* map)
 
 static void dig(Map* map, Vec2 pos)
 {
-    *map_tile(map, pos) = (Tile){.pos = pos,
-                                 .symbol = map->floor_char,
-                                 .is_walkable = true,
-                                 .is_visible = false,
-                                 .was_explored = false,
-                                 .back_color = FLOOR_BACK_COLOR,
-                                 .fore_color = FLOOR_FORE_COLOR};
+    *map_tile(map, pos) = (Tile){
+        .pos = pos,
+        .symbol = map->floor_char,
+        .is_walkable = true,
+        .is_visible = false,
+        .was_explored = false,
+        .back_color = FLOOR_BACK_COLOR,
+        .fore_color = FLOOR_FORE_COLOR,
+        .items = inv_create_inventory(),
+    };
 }
 
 static bool dig_room(Map* map, Vec2 pos, Vec2 size)
