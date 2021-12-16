@@ -58,7 +58,7 @@ static void draw_actor_stats(TCOD_Console* console, Actor* actor, Vec2 frame_pos
 
     Vec2 hp_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
     TCOD_console_printf_ex(console, hp_pos.x, hp_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
-                           "HP: "
+                           "Health: "
                            "%d\n",
                            actor->hp);
 
@@ -116,6 +116,19 @@ static void draw_restart_screen(TCOD_Console* console)
     Vec2 pos = vec2(console->w / 2 - sdslen(msg) / 2, console->h / 2);
     TCOD_console_clear(console);
     TCOD_console_printf_ex(console, pos.x, pos.y, TCOD_BKGND_SET, TCOD_LEFT, "%s", msg);
+}
+
+static void draw_dungeon_info(TCOD_Console* console, int dungeon_level, Vec2 frame_pos,
+                              Vec2 frame_size)
+{
+    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Dungeon");
+
+    Vec2 dungeon_level_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
+    TCOD_console_printf_ex(console, dungeon_level_pos.x, dungeon_level_pos.y,
+                           TCOD_BKGND_SET, TCOD_LEFT,
+                           "Level: "
+                           "%d\n",
+                           dungeon_level);
 }
 
 void gui_on_event(Event* event)
@@ -206,7 +219,7 @@ bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
     return was_used;
 }
 
-void gui_render(TCOD_Console* console, Actor* player)
+void gui_render(TCOD_Console* console, Actor* player, int dungeon_level)
 {
     g_player_id = player->id;
     Vec2 player_stats_pos = vec2(0, 0);
@@ -227,5 +240,10 @@ void gui_render(TCOD_Console* console, Actor* player)
 
     if (g_display_restart_screen)
         draw_restart_screen(console);
+
+    draw_dungeon_info(
+        console, dungeon_level,
+        vec2(player_stats_pos.x, player_stats_pos.y + player_stats_size.y + 2),
+        player_stats_size);
     // draw_message_log(console);
 }
