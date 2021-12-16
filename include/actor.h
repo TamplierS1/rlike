@@ -31,6 +31,7 @@ typedef struct
 typedef struct
 {
     Actor* dead_actor;
+    Map* map;
 } EventDeath;
 
 typedef vec_t(Actor) vec_actor_t;
