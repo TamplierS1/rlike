@@ -42,6 +42,7 @@ typedef struct
 {
     vec_tile_t tiles;
     vec_room_t rooms;
+    Vec2 exit_pos;
 
     Vec2 size;
 
@@ -56,6 +57,7 @@ typedef struct
 
     char wall_char;
     char floor_char;
+    char exit_char;
 } Map;
 
 void map_init();

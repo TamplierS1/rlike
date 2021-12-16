@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include <SDL.h>
+#include "SDL_keycode.h"
 #include "libtcod/color.h"
 #include "mt19937ar.h"
 
@@ -153,6 +154,12 @@ static void clear_dead_enemies()
     }
 }
 
+static void descend()
+{
+    g_game.dungeon_level++;
+    generate_map();
+}
+
 /************ RENDERING *************/
 
 static void draw(Vec2 pos, char symbol, TCOD_color_t fore, TCOD_color_t back,
@@ -217,7 +224,7 @@ static void render()
 
     draw_map();
     draw_actors();
-    gui_render(g_game.console, find_player());
+    gui_render(g_game.console, find_player(), g_game.dungeon_level);
 
     TCOD_context_present(g_game.context, g_game.console, NULL);
 }
@@ -268,6 +275,10 @@ static bool handle_input(SDL_Keysym key)
             }
             break;
         }
+        case SDLK_DOWN:
+            if (vec2_equals(find_player()->pos, g_game.map->exit_pos))
+                descend();
+            break;
         case SDLK_ESCAPE:
             g_game.quit = true;
             break;
@@ -318,6 +329,7 @@ void init()
     g_game.width_px = 1920;
     g_game.height_px = 1080;
     g_game.player_vision_radius = 12;
+    g_game.dungeon_level = 1;
 
     tcod_init();
 

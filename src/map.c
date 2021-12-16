@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "libtcod/color.h"
 #include "mt19937ar.h"
 
 #include "map.h"
@@ -245,6 +246,25 @@ static Vec2 dig_rooms(Map* map)
     return spawn_pos;
 }
 
+static void place_exit(Map* map, Vec2 player_pos)
+{
+    // Don't spawn in the same room with player.
+    Room* exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
+    // The player always spawns in the center of the room.
+    while (vec2_equals(exit->center, player_pos))
+    {
+        exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
+    }
+
+    Vec2 pos =
+        vec2(exit->center.x + rand_int(-(exit->size.x / 2 - 1), exit->size.x / 2 - 1),
+             exit->center.y + rand_int(-(exit->size.y / 2 - 1), exit->size.y / 2 - 1));
+    map->exit_pos = pos;
+
+    map_tile(map, pos)->symbol = map->exit_char;
+    map_tile(map, pos)->fore_color = TCOD_dark_grey;
+}
+
 void map_init()
 {
     vec_init(enemy_templates());
@@ -256,6 +276,7 @@ Map* map_generate(Vec2* out_player_start_pos, void* out_enemies)
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
     vec_init(&map->tiles);
+    map->exit_pos = vec2(-1, -1);
 
     map->size = vec2(80, 80);
 
@@ -269,12 +290,14 @@ Map* map_generate(Vec2* out_player_start_pos, void* out_enemies)
 
     map->wall_char = '#';
     map->floor_char = ' ';
+    map->exit_char = '>';
 
     vec_reserve(&map->tiles, map->size.x * map->size.y);
 
     fill_map_with_walls(map);
     *out_player_start_pos = dig_rooms(map);
     spawn_enemies(map, (vec_actor_t*)out_enemies, *out_player_start_pos);
+    place_exit(map, *out_player_start_pos);
 
     return map;
 }

@@ -24,6 +24,8 @@ typedef struct
     Camera camera;
     int player_vision_radius;
     int player_id;
+
+    int dungeon_level;
 } Game;
 
 void init();
