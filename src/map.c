@@ -62,28 +62,54 @@ static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
     return true;
 }
 
+static Room* rand_room_no_player(Map* map, Vec2 player_pos)
+{
+    // Don't spawn in the same room with player.
+    Room* exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
+
+    // Is the player inside chosen room.
+    while (player_pos.x > exit->pos.x && player_pos.x <= exit->pos.x + exit->size.x &&
+           player_pos.y > exit->pos.y && player_pos.y <= exit->pos.y + exit->size.y)
+    {
+        exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
+    }
+    return exit;
+}
+
+static Vec2 rand_pos_in_room(Room* room)
+{
+    return vec2(room->center.x + rand_int(-(room->size.x / 2 - 1), room->size.x / 2 - 1),
+                room->center.y + rand_int(-(room->size.y / 2 - 1), room->size.y / 2 - 1));
+}
+
 static vec_actor_t* enemy_templates()
 {
     static vec_actor_t vec;
     return &vec;
 }
 
-static Actor* find_enemy_template(sds name)
+static vec_actor_t* boss_templates()
 {
-    vec_actor_t* temps = enemy_templates();
-    for (int i = 0; i < temps->length; i++)
+    static vec_actor_t vec;
+    return &vec;
+}
+
+static Actor* find_enemy_template(sds name, vec_actor_t* templates)
+{
+    for (int i = 0; i < templates->length; i++)
     {
-        if (memcmp(temps->data[i].name, name, sdslen(temps->data[i].name)) == 0)
-            return &temps->data[i];
+        if (memcmp(templates->data[i].name, name, sdslen(templates->data[i].name)) == 0)
+            return &templates->data[i];
     }
     return NULL;
 }
 
-static void spawn_enemy(sds name, Vec2 pos, vec_actor_t* out_enemies)
+static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
+                        vec_actor_t* templates)
 {
     static int enemy_id = 1;
 
-    Actor* template = find_enemy_template(name);
+    Actor* template = find_enemy_template(name, templates);
     if (template == NULL)
     {
         error(__FILE__, __func__, __LINE__, "failed to spawn enemy %s at (%d, %d)", name,
@@ -121,12 +147,11 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
         Room room = map->rooms.data[i];
         for (int j = 0; j < num_to_spawn; j++)
         {
-            Vec2 pos = vec2(
-                room.center.x + rand_int(-(room.size.x / 2 - 1), room.size.x / 2 - 1),
-                room.center.y + rand_int(-(room.size.y / 2 - 1), room.size.y / 2 - 1));
+            Vec2 pos = rand_pos_in_room(&room);
             int enemy_to_spawn = rand_int(0, enemy_templates()->length - 1);
 
-            spawn_enemy(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies);
+            spawn_actor(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies,
+                        enemy_templates());
             num_spawned++;
         }
     }
@@ -249,29 +274,33 @@ static Vec2 dig_rooms(Map* map)
 static void place_exit(Map* map, Vec2 player_pos)
 {
     // Don't spawn in the same room with player.
-    Room* exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
-    // The player always spawns in the center of the room.
-    while (vec2_equals(exit->center, player_pos))
-    {
-        exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
-    }
+    Room* exit = rand_room_no_player(map, player_pos);
+    Vec2 pos = rand_pos_in_room(exit);
 
-    Vec2 pos =
-        vec2(exit->center.x + rand_int(-(exit->size.x / 2 - 1), exit->size.x / 2 - 1),
-             exit->center.y + rand_int(-(exit->size.y / 2 - 1), exit->size.y / 2 - 1));
     map->exit_pos = pos;
 
     map_tile(map, pos)->symbol = map->exit_char;
     map_tile(map, pos)->fore_color = TCOD_dark_grey;
 }
 
+static void spawn_enemy_boss(Map* map, Vec2 player_pos, vec_actor_t* out_enemies)
+{
+    // Don't spawn in the same room with player.
+    Room* room = rand_room_no_player(map, player_pos);
+    Vec2 pos = rand_pos_in_room(room);
+
+    spawn_actor(sdsnew("Boss"), pos, out_enemies, boss_templates());
+}
+
 void map_init()
 {
     vec_init(enemy_templates());
+    vec_init(boss_templates());
     srz_load_enemy_templates("res/enemies", enemy_templates());
+    srz_load_enemy_templates("res/bosses", boss_templates());
 }
 
-Map* map_generate(Vec2* out_player_start_pos, void* out_enemies)
+Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, bool spawn_boss)
 {
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
@@ -297,7 +326,11 @@ Map* map_generate(Vec2* out_player_start_pos, void* out_enemies)
     fill_map_with_walls(map);
     *out_player_start_pos = dig_rooms(map);
     spawn_enemies(map, (vec_actor_t*)out_enemies, *out_player_start_pos);
-    place_exit(map, *out_player_start_pos);
+
+    if (spawn_boss)
+        spawn_enemy_boss(map, *out_player_start_pos, (vec_actor_t*)out_enemies);
+    else
+        place_exit(map, *out_player_start_pos);
 
     return map;
 }

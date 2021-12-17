@@ -241,9 +241,8 @@ void gui_render(TCOD_Console* console, Actor* player, int dungeon_level)
     if (g_display_restart_screen)
         draw_restart_screen(console);
 
-    draw_dungeon_info(
-        console, dungeon_level,
-        vec2(player_stats_pos.x, player_stats_pos.y + player_stats_size.y + 2),
-        player_stats_size);
+    draw_dungeon_info(console, dungeon_level,
+                      vec2(player_stats_pos.x, console->h - player_stats_size.y),
+                      player_stats_size);
     // draw_message_log(console);
 }
