@@ -25,7 +25,7 @@ typedef struct
     int player_vision_radius;
     int player_id;
 
-    int dungeon_level;
+    int depth;
 } Game;
 
 void init();

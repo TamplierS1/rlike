@@ -156,8 +156,8 @@ static void clear_dead_enemies()
 
 static void descend()
 {
-    g_game.dungeon_level++;
-    if (g_game.dungeon_level == 17)
+    g_game.depth++;
+    if (g_game.depth == 17)
         generate_map(true);
 }
 
@@ -225,7 +225,7 @@ static void render()
 
     draw_map();
     draw_actors();
-    gui_render(g_game.console, find_player(), g_game.dungeon_level);
+    gui_render(g_game.console, find_player(), g_game.depth);
 
     TCOD_context_present(g_game.context, g_game.console, NULL);
 }
@@ -330,7 +330,7 @@ void init()
     g_game.width_px = 1920;
     g_game.height_px = 1080;
     g_game.player_vision_radius = 12;
-    g_game.dungeon_level = 1;
+    g_game.depth = 1;
 
     tcod_init();
 

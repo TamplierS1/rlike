@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "libtcod/color.h"
-#include "mt19937ar.h"
 
 #include "map.h"
 #include "sds.h"
@@ -11,6 +10,7 @@
 #include "pathfinding.h"
 #include "inventory.h"
 #include "vec.h"
+#include "random.h"
 
 // clang-format off
 #define FLOOR_BACK_COLOR (TCOD_color_t){35, 35, 35}
@@ -18,30 +18,6 @@
 #define WALL_BACK_COLOR (TCOD_color_t){0, 0, 0}
 #define WALL_FORE_COLOR (TCOD_color_t){79, 73, 67}
 // clang-format on
-
-static int rand_int(int min, int max)
-{
-    // This is to avoid deleting by 0.
-    min++;
-    max++;
-    // genrand_int32 generates up to a certain number exclusively.
-    // So to include that number into generation we add one to max.
-    max++;
-
-    if (min < 0)
-    {
-        min -= min;
-        max -= min;
-    }
-
-    int result = genrand_int32() % max;
-    if (result < min)
-        return min - 1;
-    else if (min < 0)
-        return result + min - 1;
-    else
-        return result - 1;
-}
 
 static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
 {
@@ -65,21 +41,21 @@ static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
 static Room* rand_room_no_player(Map* map, Vec2 player_pos)
 {
     // Don't spawn in the same room with player.
-    Room* exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
+    Room* exit = &map->rooms.data[rand_random_int(0, map->rooms.length - 1)];
 
     // Is the player inside chosen room.
     while (player_pos.x > exit->pos.x && player_pos.x <= exit->pos.x + exit->size.x &&
            player_pos.y > exit->pos.y && player_pos.y <= exit->pos.y + exit->size.y)
     {
-        exit = &map->rooms.data[rand_int(0, map->rooms.length - 1)];
+        exit = &map->rooms.data[rand_random_int(0, map->rooms.length - 1)];
     }
     return exit;
 }
 
 static Vec2 rand_pos_in_room(Room* room)
 {
-    return vec2(room->center.x + rand_int(-(room->size.x / 2 - 1), room->size.x / 2 - 1),
-                room->center.y + rand_int(-(room->size.y / 2 - 1), room->size.y / 2 - 1));
+    return vec2(room->center.x + rand_random_int(-(room->size.x / 2 - 1), room->size.x / 2 - 1),
+                room->center.y + rand_random_int(-(room->size.y / 2 - 1), room->size.y / 2 - 1));
 }
 
 static vec_actor_t* enemy_templates()
@@ -142,13 +118,13 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
             continue;
 
         int num_to_spawn =
-            rand_int(map->num_enemies_each_room_min, map->num_enemies_each_room_max);
+            rand_random_int(map->num_enemies_each_room_min, map->num_enemies_each_room_max);
 
         Room room = map->rooms.data[i];
         for (int j = 0; j < num_to_spawn; j++)
         {
             Vec2 pos = rand_pos_in_room(&room);
-            int enemy_to_spawn = rand_int(0, enemy_templates()->length - 1);
+            int enemy_to_spawn = rand_random_int(0, enemy_templates()->length - 1);
 
             spawn_actor(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies,
                         enemy_templates());
@@ -245,9 +221,9 @@ static Vec2 dig_rooms(Map* map)
     Vec2 spawn_pos = vec2(0, 0);
     for (int i = 0; i < map->room_density; i++)
     {
-        Vec2 pos = vec2(rand_int(1, map->size.x), rand_int(1, map->size.y));
-        Vec2 size = vec2(rand_int(map->room_size_min.x, map->room_size_max.x),
-                         rand_int(map->room_size_min.y, map->room_size_max.y));
+        Vec2 pos = vec2(rand_random_int(1, map->size.x), rand_random_int(1, map->size.y));
+        Vec2 size = vec2(rand_random_int(map->room_size_min.x, map->room_size_max.x),
+                         rand_random_int(map->room_size_min.y, map->room_size_max.y));
 
         if (!is_area_available(map, pos, vec2_add(pos, vec2_add_int(size, 1))))
         {
