@@ -1,3 +1,4 @@
+#include "random.h"
 #include "sds.h"
 
 #include "inventory.h"
@@ -80,8 +81,8 @@ void inv_on_event(Event* event)
             if (event_death->dead_actor->inventory.items.length == 0)
                 break;
 
-            // TODO: its not random. It needs to be.
-            int idx = 0;
+            int idx =
+                rand_random_int(0, event_death->dead_actor->inventory.items.length - 1);
             Item random_item = event_death->dead_actor->inventory.items.data[idx];
             inv_add_item(&map_tile(map, event_death->dead_actor->pos)->items,
                          &random_item);

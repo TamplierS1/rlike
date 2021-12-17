@@ -70,6 +70,7 @@ static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 fram
 {
     Inventory* inv = &actor->inventory;
 
+    // TODO: make the frame width variable.
     int entry_height = 2;
     draw_frame(console, frame_pos, vec2(width, inv->items.length * entry_height + 3),
                vec2(1, 0), "Inventory");
@@ -118,17 +119,16 @@ static void draw_restart_screen(TCOD_Console* console)
     TCOD_console_printf_ex(console, pos.x, pos.y, TCOD_BKGND_SET, TCOD_LEFT, "%s", msg);
 }
 
-static void draw_dungeon_info(TCOD_Console* console, int dungeon_level, Vec2 frame_pos,
+static void draw_dungeon_info(TCOD_Console* console, int depth, Vec2 frame_pos,
                               Vec2 frame_size)
 {
     draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Dungeon");
 
-    Vec2 dungeon_level_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
-    TCOD_console_printf_ex(console, dungeon_level_pos.x, dungeon_level_pos.y,
-                           TCOD_BKGND_SET, TCOD_LEFT,
-                           "Level: "
+    Vec2 depth_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
+    TCOD_console_printf_ex(console, depth_pos.x, depth_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
+                           "Depth: "
                            "%d\n",
-                           dungeon_level);
+                           depth);
 }
 
 void gui_on_event(Event* event)
@@ -219,7 +219,7 @@ bool gui_handle_input(SDL_Keysym key, Inventory* player_inv)
     return was_used;
 }
 
-void gui_render(TCOD_Console* console, Actor* player, int dungeon_level)
+void gui_render(TCOD_Console* console, Actor* player, int depth)
 {
     g_player_id = player->id;
     Vec2 player_stats_pos = vec2(0, 0);
@@ -241,7 +241,7 @@ void gui_render(TCOD_Console* console, Actor* player, int dungeon_level)
     if (g_display_restart_screen)
         draw_restart_screen(console);
 
-    draw_dungeon_info(console, dungeon_level,
+    draw_dungeon_info(console, depth,
                       vec2(player_stats_pos.x, console->h - player_stats_size.y),
                       player_stats_size);
     // draw_message_log(console);
