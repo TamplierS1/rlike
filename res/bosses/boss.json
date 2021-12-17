@@ -1,0 +1,39 @@
+{
+    "id": -1,
+    "pos": {
+        "x": -1,
+        "y": -1
+    },
+    "symbol": 66,
+    "color": {
+        "r": 214,
+        "g": 38,
+        "b": 38
+    },
+    "name": "Boss",
+    "hp": 190,
+    "vision_radius": 12,
+    "inventory": {
+        "items": [
+            {
+                "name": "Katana",
+                "category": 0,
+                "item": {
+                    "dmg": 26
+                },
+                "equipped": true,
+                "id": 2
+            },
+            {
+                "name": "Breastplate",
+                "id": -1,
+                "category": 1,
+                "item": {
+                    "defence": 4
+                },
+                "equipped": true
+            }
+        ]
+    },
+    "is_alive": true
+}

@@ -83,7 +83,7 @@ static bool load_map()
     return true;
 }
 
-static void generate_map()
+static void generate_map(bool spawn_boss)
 {
     Inventory inv = inv_create_inventory();
     Item weapon = item_spawn_item("Sword");
@@ -98,7 +98,7 @@ static void generate_map()
                     12, inv,    true};
 
     vec_init(&g_game.actors);
-    g_game.map = map_generate(&player.pos, &g_game.actors);
+    g_game.map = map_generate(&player.pos, &g_game.actors, spawn_boss);
     g_game.player_id = 0;
     vec_push(&g_game.actors, player);
 }
@@ -157,7 +157,8 @@ static void clear_dead_enemies()
 static void descend()
 {
     g_game.dungeon_level++;
-    generate_map();
+    if (g_game.dungeon_level == 17)
+        generate_map(true);
 }
 
 /************ RENDERING *************/
@@ -236,7 +237,7 @@ static bool handle_input(SDL_Keysym key)
     bool input_processed = true;
     switch (key.sym)
     {
-        // 'b' means the player wants to attack.
+        // 'f' means the player wants to attack.
         case SDLK_f:
             input_processed = false;
             break;
@@ -256,7 +257,7 @@ static bool handle_input(SDL_Keysym key)
             if (!find_player()->is_alive)
             {
                 nuke_enemies();
-                generate_map();
+                generate_map(false);
             }
             break;
         case SDLK_n:
@@ -346,7 +347,7 @@ void init()
     map_init();
     if (!load_map())
     {
-        generate_map();
+        generate_map(false);
     }
 
     event_system_init();

@@ -1,0 +1,9 @@
+{
+    "name": "Katana",
+    "id": -1,
+    "category": 0,
+    "item": {
+        "dmg": 26
+    },
+    "equipped": false
+}
