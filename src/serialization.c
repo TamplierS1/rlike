@@ -173,7 +173,10 @@ static bool deserialize_item(struct json_object* parent, Item* out_item)
         case ITEM_WEAPON:
         {
             ItemWeapon* weapon = malloc(sizeof(ItemWeapon));
-            if (!deserialize_int(jsubitem, "dmg", &weapon->dmg))
+            if (!deserialize_int(jsubitem, "physical_dmg", &weapon->physical_dmg) ||
+                !deserialize_int(jsubitem, "fire_dmg", &weapon->fire_dmg) ||
+                !deserialize_int(jsubitem, "cold_dmg", &weapon->cold_dmg) ||
+                !deserialize_int(jsubitem, "lightning_dmg", &weapon->lightning_dmg))
                 return false;
             item.item = weapon;
             break;
@@ -366,7 +369,10 @@ static void serialize_item_to_array(struct json_object* parent, Item* item)
         case ITEM_WEAPON:
         {
             ItemWeapon* subitem = (ItemWeapon*)item->item;
-            serialize_int(jsubitem, "dmg", subitem->dmg);
+            serialize_int(jsubitem, "physical_dmg", subitem->physical_dmg);
+            serialize_int(jsubitem, "fire_dmg", subitem->fire_dmg);
+            serialize_int(jsubitem, "cold_dmg", subitem->cold_dmg);
+            serialize_int(jsubitem, "lightning_dmg", subitem->lightning_dmg);
             break;
         }
         case ITEM_ARMOR:
@@ -405,7 +411,10 @@ static void serialize_item_to_object(struct json_object* parent, const char* nam
         case ITEM_WEAPON:
         {
             ItemWeapon* subitem = (ItemWeapon*)item->item;
-            serialize_int(jsubitem, "dmg", subitem->dmg);
+            serialize_int(jsubitem, "physical_dmg", subitem->physical_dmg);
+            serialize_int(jsubitem, "fire_dmg", subitem->fire_dmg);
+            serialize_int(jsubitem, "cold_dmg", subitem->cold_dmg);
+            serialize_int(jsubitem, "lightning_dmg", subitem->lightning_dmg);
             break;
         }
         case ITEM_ARMOR:

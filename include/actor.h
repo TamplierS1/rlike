@@ -48,7 +48,11 @@ void actor_on_event(Event* event);
 ItemWeapon* actor_get_weapon(Actor* actor);
 ItemArmor* actor_get_armor(Actor* actor);
 
-int actor_get_dmg(Actor* actor);
+int actor_get_phys_dmg(Actor* actor);
+int actor_get_fire_dmg(Actor* actor);
+int actor_get_cold_dmg(Actor* actor);
+int actor_get_lightning_dmg(Actor* actor);
+
 int actor_get_defence(Actor* actor);
 int actor_get_phys_res(Actor* actor);
 int actor_get_fire_res(Actor* actor);

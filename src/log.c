@@ -54,7 +54,7 @@ void log_on_event(Event* event)
 
             log_new_msg(sdscatprintf(
                 sdsempty(), "%s attacked %s for %d damage.", event_attack->attacker->name,
-                event_attack->victim->name, actor_get_dmg(event_attack->attacker)));
+                event_attack->victim->name, actor_get_phys_dmg(event_attack->attacker)));
             break;
         }
         case EVENT_DEATH:

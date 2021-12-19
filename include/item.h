@@ -29,7 +29,10 @@ typedef struct
 
 typedef struct
 {
-    int dmg;
+    int physical_dmg;
+    int fire_dmg;
+    int cold_dmg;
+    int lightning_dmg;
 } ItemWeapon;
 
 typedef struct

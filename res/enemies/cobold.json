@@ -19,10 +19,13 @@
                 "name": "Spear",
                 "category": 0,
                 "item": {
-                    "dmg": 10
+                    "physical_dmg": 12,
+                    "fire_dmg": 0,
+                    "cold_dmg": 0,
+                    "lightning_dmg": 0
                 },
                 "equipped": true,
-                "id": 2
+                "id": -1
             },
             {
                 "name": "Leather armor",

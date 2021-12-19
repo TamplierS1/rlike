@@ -38,8 +38,18 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 
 void actor_attack(Actor* victim, Actor* attacker)
 {
-    victim->hp -= actor_get_dmg(attacker);
-    victim->hp += actor_get_defence(victim);
+    int total_dmg = 0;
+    total_dmg += (int)(actor_get_phys_dmg(attacker) *
+                       (1.0f - (actor_get_phys_res(victim) / 100.0f)));
+    total_dmg += (int)(actor_get_fire_dmg(attacker) *
+                       (1.0f - (actor_get_fire_res(victim) / 100.0)));
+    total_dmg += (int)(actor_get_cold_dmg(attacker) *
+                       (1.0f - (actor_get_cold_res(victim) / 100.0)));
+    total_dmg += (int)(actor_get_lightning_dmg(attacker) *
+                       (1 - (actor_get_lightning_res(victim) / 100.0)));
+    total_dmg -= actor_get_defence(victim);
+
+    victim->hp -= total_dmg;
 
     // TODO: move this check into `clear_dead_enemies` in game.c
     if (victim->hp <= 0)
@@ -77,10 +87,28 @@ ItemArmor* actor_get_armor(Actor* actor)
     return ((ItemArmor*)armor->item);
 }
 
-int actor_get_dmg(Actor* actor)
+int actor_get_phys_dmg(Actor* actor)
 {
     ItemWeapon* weapon = actor_get_weapon(actor);
-    return weapon == NULL ? 0 : weapon->dmg;
+    return weapon == NULL ? 0 : weapon->physical_dmg;
+}
+
+int actor_get_fire_dmg(Actor* actor)
+{
+    ItemWeapon* weapon = actor_get_weapon(actor);
+    return weapon == NULL ? 0 : weapon->fire_dmg;
+}
+
+int actor_get_cold_dmg(Actor* actor)
+{
+    ItemWeapon* weapon = actor_get_weapon(actor);
+    return weapon == NULL ? 0 : weapon->cold_dmg;
+}
+
+int actor_get_lightning_dmg(Actor* actor)
+{
+    ItemWeapon* weapon = actor_get_weapon(actor);
+    return weapon == NULL ? 0 : weapon->lightning_dmg;
 }
 
 int actor_get_defence(Actor* actor)

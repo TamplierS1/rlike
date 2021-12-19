@@ -54,7 +54,7 @@ static void apply_prefix(ItemCategory category, Item* item, ItemPrefix prefix)
             switch (category)
             {
                 case ITEM_WEAPON:
-                    ((ItemWeapon*)item->item)->dmg += 2;
+                    ((ItemWeapon*)item->item)->physical_dmg += 2;
                     break;
                 case ITEM_ARMOR:
                     ((ItemArmor*)item->item)->defence += 1;
