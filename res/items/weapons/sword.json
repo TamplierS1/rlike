@@ -2,8 +2,11 @@
     "name": "Sword",
     "category": 0,
     "item": {
-        "dmg": 10
+        "physical_dmg": 10,
+        "fire_dmg": 0,
+        "cold_dmg": 0,
+        "lightning_dmg": 0
     },
-    "equipped": false,
+    "equipped": true,
     "id": -1
 }

@@ -3,7 +3,10 @@
     "id": -1,
     "category": 0,
     "item": {
-        "dmg": 26
+        "physical_dmg": 26,
+        "fire_dmg": 0,
+        "cold_dmg": 0,
+        "lightning_dmg": 0
     },
-    "equipped": false
+    "equipped": true
 }

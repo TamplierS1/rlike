@@ -2,8 +2,11 @@
     "name": "Stiletto",
     "category": 0,
     "item": {
-        "dmg": 8
+        "physical_dmg": 8,
+        "fire_dmg": 0,
+        "cold_dmg": 0,
+        "lightning_dmg": 0
     },
-    "equipped": false,
+    "equipped": true,
     "id": -1
 }
