@@ -38,17 +38,12 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 
 void actor_attack(Actor* victim, Actor* attacker)
 {
-    Item* weapon = inv_find_item_ex(&attacker->inventory, ITEM_WEAPON, true);
-    Item* armor = inv_find_item_ex(&victim->inventory, ITEM_ARMOR, true);
-    if (weapon != NULL)
-    {
-        victim->hp -= ((ItemWeapon*)weapon->item)->dmg;
-        if (armor != NULL)
-            victim->hp += ((ItemArmor*)armor->item)->defence;
+    victim->hp -= actor_get_dmg(attacker);
+    victim->hp += actor_get_defence(victim);
 
-        if (victim->hp <= 0)
-            victim->is_alive = false;
-    }
+    // TODO: move this check into `clear_dead_enemies` in game.c
+    if (victim->hp <= 0)
+        victim->is_alive = false;
 }
 
 void actor_on_event(Event* event)
@@ -64,4 +59,56 @@ void actor_on_event(Event* event)
         default:
             break;
     }
+}
+
+ItemWeapon* actor_get_weapon(Actor* actor)
+{
+    Item* weapon = inv_find_item_ex(&actor->inventory, ITEM_WEAPON, true);
+    if (weapon == NULL)
+        return NULL;
+    return ((ItemWeapon*)weapon->item);
+}
+
+ItemArmor* actor_get_armor(Actor* actor)
+{
+    Item* armor = inv_find_item_ex(&actor->inventory, ITEM_ARMOR, true);
+    if (armor == NULL)
+        return NULL;
+    return ((ItemArmor*)armor->item);
+}
+
+int actor_get_dmg(Actor* actor)
+{
+    ItemWeapon* weapon = actor_get_weapon(actor);
+    return weapon == NULL ? 0 : weapon->dmg;
+}
+
+int actor_get_defence(Actor* actor)
+{
+    ItemArmor* armor = actor_get_armor(actor);
+    return armor == NULL ? 0 : armor->defence;
+}
+
+int actor_get_phys_res(Actor* actor)
+{
+    ItemArmor* armor = actor_get_armor(actor);
+    return armor == NULL ? 0 : armor->physical_resistance;
+}
+
+int actor_get_fire_res(Actor* actor)
+{
+    ItemArmor* armor = actor_get_armor(actor);
+    return armor == NULL ? 0 : armor->fire_resistance;
+}
+
+int actor_get_cold_res(Actor* actor)
+{
+    ItemArmor* armor = actor_get_armor(actor);
+    return armor == NULL ? 0 : armor->cold_resistance;
+}
+
+int actor_get_lightning_res(Actor* actor)
+{
+    ItemArmor* armor = actor_get_armor(actor);
+    return armor == NULL ? 0 : armor->lightning_resistance;
 }

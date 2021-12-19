@@ -35,6 +35,11 @@ typedef struct
 typedef struct
 {
     int defence;
+    // Resistances are represented as %
+    int physical_resistance;
+    int fire_resistance;
+    int cold_resistance;
+    int lightning_resistance;
 } ItemArmor;
 
 typedef vec_t(Item) vec_item_t;
