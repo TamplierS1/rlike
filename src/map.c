@@ -54,8 +54,9 @@ static Room* rand_room_no_player(Map* map, Vec2 player_pos)
 
 static Vec2 rand_pos_in_room(Room* room)
 {
-    return vec2(room->center.x + rand_random_int(-(room->size.x / 2 - 1), room->size.x / 2 - 1),
-                room->center.y + rand_random_int(-(room->size.y / 2 - 1), room->size.y / 2 - 1));
+    return vec2(
+        room->center.x + rand_random_int(-(room->size.x / 2 - 1), room->size.x / 2 - 1),
+        room->center.y + rand_random_int(-(room->size.y / 2 - 1), room->size.y / 2 - 1));
 }
 
 static vec_actor_t* enemy_templates()
@@ -81,7 +82,7 @@ static Actor* find_enemy_template(sds name, vec_actor_t* templates)
 }
 
 static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
-                        vec_actor_t* templates)
+                        vec_actor_t* templates, int depth)
 {
     static int enemy_id = 1;
 
@@ -96,7 +97,7 @@ static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
     Inventory inv = inv_create_inventory();
     for (int i = 0; i < template->inventory.items.length; i++)
     {
-        Item item = item_spawn_item(template->inventory.items.data[i].name);
+        Item item = item_spawn_item(template->inventory.items.data[i].name, depth);
         item.equipped = template->inventory.items.data[i].equipped;
         inv_add_item(&inv, &item);
         inv_equip_item(&inv, item.id);
@@ -108,7 +109,8 @@ static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
     vec_push(out_enemies, enemy);
 }
 
-static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_pos)
+static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_pos,
+                          int depth)
 {
     int num_spawned = 0;
     for (int i = 0; i < map->rooms.length; i++)
@@ -117,8 +119,8 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
         if (vec2_equals(map->rooms.data[i].center, player_start_pos))
             continue;
 
-        int num_to_spawn =
-            rand_random_int(map->num_enemies_each_room_min, map->num_enemies_each_room_max);
+        int num_to_spawn = rand_random_int(map->num_enemies_each_room_min,
+                                           map->num_enemies_each_room_max);
 
         Room room = map->rooms.data[i];
         for (int j = 0; j < num_to_spawn; j++)
@@ -127,7 +129,7 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
             int enemy_to_spawn = rand_random_int(0, enemy_templates()->length - 1);
 
             spawn_actor(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies,
-                        enemy_templates());
+                        enemy_templates(), depth);
             num_spawned++;
         }
     }
@@ -259,13 +261,14 @@ static void place_exit(Map* map, Vec2 player_pos)
     map_tile(map, pos)->fore_color = TCOD_dark_grey;
 }
 
-static void spawn_enemy_boss(Map* map, Vec2 player_pos, vec_actor_t* out_enemies)
+static void spawn_enemy_boss(Map* map, Vec2 player_pos, vec_actor_t* out_enemies,
+                             int depth)
 {
     // Don't spawn in the same room with player.
     Room* room = rand_room_no_player(map, player_pos);
     Vec2 pos = rand_pos_in_room(room);
 
-    spawn_actor(sdsnew("Boss"), pos, out_enemies, boss_templates());
+    spawn_actor(sdsnew("Boss"), pos, out_enemies, boss_templates(), depth);
 }
 
 void map_init()
@@ -276,7 +279,8 @@ void map_init()
     srz_load_enemy_templates("res/bosses", boss_templates());
 }
 
-Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, bool spawn_boss)
+Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, bool spawn_boss,
+                  int depth)
 {
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
@@ -301,10 +305,10 @@ Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, bool spawn_boss
 
     fill_map_with_walls(map);
     *out_player_start_pos = dig_rooms(map);
-    spawn_enemies(map, (vec_actor_t*)out_enemies, *out_player_start_pos);
+    spawn_enemies(map, (vec_actor_t*)out_enemies, *out_player_start_pos, depth);
 
     if (spawn_boss)
-        spawn_enemy_boss(map, *out_player_start_pos, (vec_actor_t*)out_enemies);
+        spawn_enemy_boss(map, *out_player_start_pos, (vec_actor_t*)out_enemies, depth);
     else
         place_exit(map, *out_player_start_pos);
 

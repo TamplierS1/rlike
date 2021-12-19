@@ -31,11 +31,11 @@ static void check_inventory_selection_bounds(Inventory* player_inventory)
 }
 
 static void draw_frame(TCOD_Console* console, Vec2 frame_pos, Vec2 frame_size,
-                       Vec2 title_offset, sds title)
+                       Vec2 title_offset, sds title, bool clear_bg)
 {
     TCOD_console_draw_frame_rgb(console, frame_pos.x, frame_pos.y, frame_size.x,
                                 frame_size.y, NULL, &TCOD_light_gray, &TCOD_black,
-                                TCOD_BKGND_SET, true);
+                                TCOD_BKGND_SET, clear_bg);
     TCOD_console_printf_ex(console, frame_pos.x + title_offset.x,
                            frame_pos.y + title_offset.y, TCOD_BKGND_DEFAULT, TCOD_LEFT,
                            "%s", title);
@@ -45,8 +45,6 @@ static void apply_color(TCOD_Console* console, Vec2 begin, int length, TCOD_colo
 {
     for (int x = begin.x; x < begin.x + length - 1; x++)
     {
-        if (console->tiles[x + begin.y * console->w].ch == ' ')
-            break;
         TCOD_console_set_char_foreground(console, x, begin.y, color);
     }
 }
@@ -54,30 +52,29 @@ static void apply_color(TCOD_Console* console, Vec2 begin, int length, TCOD_colo
 static void draw_actor_stats(TCOD_Console* console, Actor* actor, Vec2 frame_pos,
                              Vec2 frame_size)
 {
-    draw_frame(console, frame_pos, frame_size, vec2(1, 0), actor->name);
+    draw_frame(console, frame_pos, frame_size, vec2(1, 0), actor->name, true);
 
     Vec2 hp_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
-    TCOD_console_printf_ex(console, hp_pos.x, hp_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
-                           "Health: "
-                           "%d\n",
-                           actor->hp);
+    sds msg = sdscatprintf(sdsempty(), "Health: %d\n", actor->hp);
+    TCOD_console_printf_ex(console, hp_pos.x, hp_pos.y, TCOD_BKGND_SET, TCOD_LEFT, "%s",
+                           msg);
 
-    apply_color(console, hp_pos, frame_size.x, TCOD_dark_green);
+    apply_color(console, hp_pos, sdslen(msg), TCOD_dark_green);
 }
 
-static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 frame_pos,
-                                  int width)
+static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 frame_pos)
 {
     Inventory* inv = &actor->inventory;
 
-    // TODO: make the frame width variable.
     int entry_height = 2;
-    draw_frame(console, frame_pos, vec2(width, inv->items.length * entry_height + 3),
-               vec2(1, 0), "Inventory");
-
+    int longest_item_name_len = 0;
     for (int i = 0; i < inv->items.length; i++)
     {
         Item* item = &inv->items.data[i];
+
+        int item_name_len = sdslen(item->name);
+        if (item_name_len > longest_item_name_len)
+            longest_item_name_len = item_name_len;
 
         Vec2 entry_pos = vec2(frame_pos.x + 1, frame_pos.y + entry_height * i + 2);
         TCOD_console_printf_ex(console, entry_pos.x, entry_pos.y, TCOD_BKGND_SET,
@@ -88,14 +85,16 @@ static void draw_player_inventory(TCOD_Console* console, Actor* actor, Vec2 fram
             apply_color(console, vec2(entry_pos.x + 3, entry_pos.y),
                         sdslen(item->name) + 1, TCOD_darker_green);
     }
+
+    draw_frame(console, frame_pos,
+               vec2(longest_item_name_len + 5, inv->items.length * entry_height + 3),
+               vec2(1, 0), "Inventory", false);
 }
 
 static void draw_message_log(TCOD_Console* console)
 {
     Vec2 frame_size = vec2(30, 12);
     Vec2 frame_pos = vec2(console->w - frame_size.x, 0);
-
-    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Messages");
 
     int entry_height = 2;
     MessageLog* log = log_get_log();
@@ -122,7 +121,7 @@ static void draw_restart_screen(TCOD_Console* console)
 static void draw_dungeon_info(TCOD_Console* console, int depth, Vec2 frame_pos,
                               Vec2 frame_size)
 {
-    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Dungeon");
+    draw_frame(console, frame_pos, frame_size, vec2(1, 0), "Dungeon", true);
 
     Vec2 depth_pos = vec2(frame_pos.x + 1, frame_pos.y + 2);
     TCOD_console_printf_ex(console, depth_pos.x, depth_pos.y, TCOD_BKGND_SET, TCOD_LEFT,
@@ -235,8 +234,7 @@ void gui_render(TCOD_Console* console, Actor* player, int depth)
     if (g_display_inventory)
         draw_player_inventory(
             console, player,
-            vec2(player_stats_pos.x, player_stats_pos.y + player_stats_size.y),
-            player_stats_size.x);
+            vec2(player_stats_pos.x, player_stats_pos.y + player_stats_size.y));
 
     if (g_display_restart_screen)
         draw_restart_screen(console);

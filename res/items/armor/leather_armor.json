@@ -1,0 +1,9 @@
+{
+    "name": "Leather armor",
+    "id": -1,
+    "category": 1,
+    "item": {
+        "defence": 2
+    },
+    "equipped": true
+}

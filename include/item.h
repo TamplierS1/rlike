@@ -12,6 +12,12 @@ typedef enum
     ITEM_EMPTY,
 } ItemCategory;
 
+typedef enum
+{
+    ITEM_PREFIX_FINE,
+    ITEM_PREFIX_NONE
+} ItemPrefix;
+
 typedef struct
 {
     sds name;
@@ -33,7 +39,8 @@ typedef struct
 
 typedef vec_t(Item) vec_item_t;
 
-void item_load_items();
-Item item_spawn_item(char* name);
+void item_init();
+Item item_spawn_item(sds name, int depth);
+void item_end();
 
 #endif  // ITEM_H

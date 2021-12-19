@@ -5,6 +5,7 @@
 
 #include <SDL.h>
 #include "SDL_keycode.h"
+#include "SDL_video.h"
 #include "libtcod/color.h"
 #include "mt19937ar.h"
 
@@ -86,11 +87,11 @@ static bool load_map()
 static void generate_map(bool spawn_boss)
 {
     Inventory inv = inv_create_inventory();
-    Item weapon = item_spawn_item("Sword");
+    Item weapon = item_spawn_item("Sword", g_game.depth);
     inv_add_item(&inv, &weapon);
     inv_equip_item(&inv, weapon.id);
 
-    Item armor = item_spawn_item("Breastplate");
+    Item armor = item_spawn_item("Leather armor", g_game.depth);
     inv_add_item(&inv, &armor);
     inv_equip_item(&inv, armor.id);
 
@@ -98,7 +99,7 @@ static void generate_map(bool spawn_boss)
                     12, inv,    true};
 
     vec_init(&g_game.actors);
-    g_game.map = map_generate(&player.pos, &g_game.actors, spawn_boss);
+    g_game.map = map_generate(&player.pos, &g_game.actors, spawn_boss, g_game.depth);
     g_game.player_id = 0;
     vec_push(&g_game.actors, player);
 }
@@ -156,9 +157,14 @@ static void clear_dead_enemies()
 
 static void descend()
 {
+    srz_save_player(find_player(), "res/saves/player.json");
+
     g_game.depth++;
-    if (g_game.depth == 17)
-        generate_map(true);
+    generate_map(g_game.depth == 17 ? true : false);
+
+    Vec2 generated_pos = find_player()->pos;
+    srz_load_player("res/saves/player.json", find_player());
+    find_player()->pos = generated_pos;
 }
 
 /************ RENDERING *************/
@@ -325,8 +331,8 @@ static void tcod_init()
 void init()
 {
     g_game.title = "rlike";
-    g_game.width = 80;
-    g_game.height = 60;
+    g_game.width = 130;
+    g_game.height = 90;
     g_game.width_px = 1920;
     g_game.height_px = 1080;
     g_game.player_vision_radius = 12;
@@ -342,7 +348,7 @@ void init()
 
     log_init();
 
-    item_load_items();
+    item_init();
 
     map_init();
     if (!load_map())
@@ -397,15 +403,8 @@ void update()
     }
 }
 
-void end()
+static void free_actors()
 {
-    log_end();
-
-    srz_save_player(find_player(), "res/saves/player.json");
-    remove_player();
-    srz_save_map(g_game.map, "res/saves/map.json");
-    srz_save_enemies(&g_game.actors, "res/saves/enemies.json");
-
     for (int i = 0; i < g_game.actors.length; i++)
     {
         sdsfree(g_game.actors.data[i].name);
@@ -416,8 +415,22 @@ void end()
         }
         vec_deinit(&g_game.actors.data[i].inventory.items);
     }
-
     vec_deinit(&g_game.actors);
+}
+
+void end()
+{
+    log_end();
+
+    srz_save_player(find_player(), "res/saves/player.json");
+    remove_player();
+    srz_save_map(g_game.map, "res/saves/map.json");
+    srz_save_enemies(&g_game.actors, "res/saves/enemies.json");
+
+    item_end();
+
+    free_actors();
+
     event_system_deinit();
     map_end(g_game.map);
 }
