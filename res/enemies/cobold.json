@@ -25,11 +25,15 @@
                 "id": 2
             },
             {
-                "name": "Breastplate",
+                "name": "Leather armor",
                 "id": -1,
                 "category": 1,
                 "item": {
-                    "defence": 4
+                    "defence": 2,
+                    "physical_resistance": 15,
+                    "fire_resistance": 0,
+                    "cold_resistance": 12,
+                    "lightning_resistance": 7
                 },
                 "equipped": true
             }
