@@ -176,7 +176,8 @@ static bool deserialize_item(struct json_object* parent, Item* out_item)
             if (!deserialize_int(jsubitem, "physical_dmg", &weapon->physical_dmg) ||
                 !deserialize_int(jsubitem, "fire_dmg", &weapon->fire_dmg) ||
                 !deserialize_int(jsubitem, "cold_dmg", &weapon->cold_dmg) ||
-                !deserialize_int(jsubitem, "lightning_dmg", &weapon->lightning_dmg))
+                !deserialize_int(jsubitem, "lightning_dmg", &weapon->lightning_dmg) ||
+                !deserialize_int(jsubitem, "accuracy", &weapon->accuracy))
                 return false;
             item.item = weapon;
             break;
@@ -373,6 +374,7 @@ static void serialize_item_to_array(struct json_object* parent, Item* item)
             serialize_int(jsubitem, "fire_dmg", subitem->fire_dmg);
             serialize_int(jsubitem, "cold_dmg", subitem->cold_dmg);
             serialize_int(jsubitem, "lightning_dmg", subitem->lightning_dmg);
+            serialize_int(jsubitem, "accuracy", subitem->accuracy);
             break;
         }
         case ITEM_ARMOR:
@@ -415,6 +417,7 @@ static void serialize_item_to_object(struct json_object* parent, const char* nam
             serialize_int(jsubitem, "fire_dmg", subitem->fire_dmg);
             serialize_int(jsubitem, "cold_dmg", subitem->cold_dmg);
             serialize_int(jsubitem, "lightning_dmg", subitem->lightning_dmg);
+            serialize_int(jsubitem, "accuracy", subitem->accuracy);
             break;
         }
         case ITEM_ARMOR:

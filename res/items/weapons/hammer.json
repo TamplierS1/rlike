@@ -6,7 +6,8 @@
         "physical_dmg": 14,
         "fire_dmg": 0,
         "cold_dmg": 0,
-        "lightning_dmg": 0
+        "lightning_dmg": 0,
+        "accuracy": 89
     },
     "equipped": true 
 }
