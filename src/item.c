@@ -93,16 +93,17 @@ Item item_spawn_item(sds name, int depth)
     {
         case ITEM_WEAPON:
             subitem = malloc(sizeof(ItemWeapon));
+            memcpy(subitem, template->item, sizeof(ItemWeapon));
             break;
         case ITEM_ARMOR:
             subitem = malloc(sizeof(ItemArmor));
+            memcpy(subitem, template->item, sizeof(ItemArmor));
             break;
         default:
             fatal(__FILE__, __func__, __LINE__,
                   "not all item category options were covered.");
             return spawn_empty_item(id++);
     }
-    memcpy(subitem, template->item, sizeof(subitem));
 
     Item item = {sdsdup(template->name), template->category, subitem, false, id};
 

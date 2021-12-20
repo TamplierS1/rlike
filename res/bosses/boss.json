@@ -23,9 +23,10 @@
                     "physical_dmg": 26,
                     "fire_dmg": 0,
                     "cold_dmg": 0,
-                    "lightning_dmg": 0
+                    "lightning_dmg": 0,
+                    "accuracy": 93
                 },
-                "equipped": true 
+                "equipped": true
             },
             {
                 "name": "Breastplate",

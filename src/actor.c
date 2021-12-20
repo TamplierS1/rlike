@@ -2,6 +2,7 @@
 
 #include "actor.h"
 #include "inventory.h"
+#include "random.h"
 
 static bool check_collision(Map* map, Actor* actor, vec_actor_t* enemies)
 {
@@ -38,6 +39,9 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 
 void actor_attack(Actor* victim, Actor* attacker)
 {
+    if (rand_random_int(0, 100) > actor_get_accuracy(attacker))
+        return;
+
     int total_dmg = 0;
     total_dmg += (int)(actor_get_phys_dmg(attacker) *
                        (1.0f - (actor_get_phys_res(victim) / 100.0f)));
@@ -109,6 +113,12 @@ int actor_get_lightning_dmg(Actor* actor)
 {
     ItemWeapon* weapon = actor_get_weapon(actor);
     return weapon == NULL ? 0 : weapon->lightning_dmg;
+}
+
+int actor_get_accuracy(Actor* actor)
+{
+    ItemWeapon* weapon = actor_get_weapon(actor);
+    return weapon == NULL ? 0 : weapon->accuracy;
 }
 
 int actor_get_defence(Actor* actor)

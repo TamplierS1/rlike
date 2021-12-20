@@ -52,6 +52,7 @@ int actor_get_phys_dmg(Actor* actor);
 int actor_get_fire_dmg(Actor* actor);
 int actor_get_cold_dmg(Actor* actor);
 int actor_get_lightning_dmg(Actor* actor);
+int actor_get_accuracy(Actor* actor);
 
 int actor_get_defence(Actor* actor);
 int actor_get_phys_res(Actor* actor);

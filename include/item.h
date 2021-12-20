@@ -33,6 +33,8 @@ typedef struct
     int fire_dmg;
     int cold_dmg;
     int lightning_dmg;
+
+    int accuracy;
 } ItemWeapon;
 
 typedef struct
