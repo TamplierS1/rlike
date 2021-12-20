@@ -186,6 +186,7 @@ static bool deserialize_item(struct json_object* parent, Item* out_item)
         {
             ItemArmor* armor = malloc(sizeof(ItemArmor));
             if (!deserialize_int(jsubitem, "defence", &armor->defence) ||
+                !deserialize_int(jsubitem, "evasion", &armor->evasion) ||
                 !deserialize_int(jsubitem, "physical_resistance",
                                  &armor->physical_resistance) ||
                 !deserialize_int(jsubitem, "fire_resistance", &armor->fire_resistance) ||
@@ -381,6 +382,7 @@ static void serialize_item_to_array(struct json_object* parent, Item* item)
         {
             ItemArmor* subitem = (ItemArmor*)item->item;
             serialize_int(jsubitem, "defence", subitem->defence);
+            serialize_int(jsubitem, "evasion", subitem->evasion);
             serialize_int(jsubitem, "physical_resistance", subitem->physical_resistance);
             serialize_int(jsubitem, "fire_resistance", subitem->fire_resistance);
             serialize_int(jsubitem, "cold_resistance", subitem->cold_resistance);
@@ -424,7 +426,7 @@ static void serialize_item_to_object(struct json_object* parent, const char* nam
         {
             ItemArmor* subitem = (ItemArmor*)item->item;
             serialize_int(jsubitem, "defence", subitem->defence);
-            serialize_int(jsubitem, "defence", subitem->defence);
+            serialize_int(jsubitem, "evasion", subitem->evasion);
             serialize_int(jsubitem, "physical_resistance", subitem->physical_resistance);
             serialize_int(jsubitem, "fire_resistance", subitem->fire_resistance);
             serialize_int(jsubitem, "cold_resistance", subitem->cold_resistance);

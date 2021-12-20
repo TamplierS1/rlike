@@ -40,6 +40,8 @@ typedef struct
 typedef struct
 {
     int defence;
+    int evasion;
+
     // Resistances are represented as %
     int physical_resistance;
     int fire_resistance;

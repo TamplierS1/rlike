@@ -39,7 +39,8 @@ void actor_move(Map* map, vec_actor_t* enemies, Actor* actor, Vec2 dir)
 
 void actor_attack(Actor* victim, Actor* attacker)
 {
-    if (rand_random_int(0, 100) > actor_get_accuracy(attacker))
+    if (rand_random_int(0, 100) >
+        actor_get_accuracy(attacker) - actor_get_evasion(victim))
         return;
 
     int total_dmg = 0;
@@ -125,6 +126,12 @@ int actor_get_defence(Actor* actor)
 {
     ItemArmor* armor = actor_get_armor(actor);
     return armor == NULL ? 0 : armor->defence;
+}
+
+int actor_get_evasion(Actor* actor)
+{
+    ItemArmor* armor = actor_get_armor(actor);
+    return armor == NULL ? 0 : armor->evasion;
 }
 
 int actor_get_phys_res(Actor* actor)
