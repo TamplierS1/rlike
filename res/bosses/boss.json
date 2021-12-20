@@ -34,6 +34,7 @@
                 "category": 1,
                 "item": {
                     "defence": 4,
+                    "evasion": 9,
                     "physical_resistance": 30,
                     "fire_resistance": 0,
                     "cold_resistance": 0,

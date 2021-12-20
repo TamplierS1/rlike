@@ -55,6 +55,7 @@ int actor_get_lightning_dmg(Actor* actor);
 int actor_get_accuracy(Actor* actor);
 
 int actor_get_defence(Actor* actor);
+int actor_get_evasion(Actor* actor);
 int actor_get_phys_res(Actor* actor);
 int actor_get_fire_res(Actor* actor);
 int actor_get_cold_res(Actor* actor);
