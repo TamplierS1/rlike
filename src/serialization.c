@@ -315,7 +315,8 @@ static bool deserialize_actor(struct json_object* jactor, Actor* out_actor)
         !deserialize_int(jactor, "hp", &actor.hp) ||
         !deserialize_int(jactor, "vision_radius", &actor.vision_radius) ||
         !deserialize_inventory(jactor, "inventory", &actor.inventory) ||
-        !deserialize_bool(jactor, "is_alive", &actor.is_alive))
+        !deserialize_bool(jactor, "is_alive", &actor.is_alive) ||
+        !deserialize_int(jactor, "depth", &actor.depth))
         return false;
     actor.symbol = (char)symbol;
 
@@ -471,6 +472,7 @@ static struct json_object* serialize_actor(Actor* actor)
     serialize_int(jactor, "vision_radius", actor->vision_radius);
     serialize_inventory(jactor, "inventory", &actor->inventory);
     serialize_bool(jactor, "is_alive", actor->is_alive);
+    serialize_bool(jactor, "depth", actor->depth);
 
     return jactor;
 }

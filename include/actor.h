@@ -6,7 +6,6 @@
 #include "inventory.h"
 #include "sds.h"
 
-// TODO: give enemies the depth they spawn at.
 typedef struct
 {
     int id;
@@ -20,6 +19,8 @@ typedef struct
     Inventory inventory;
 
     bool is_alive;
+
+    int depth;
 } Actor;
 
 typedef struct

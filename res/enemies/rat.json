@@ -30,5 +30,6 @@
             }
         ]
     },
-    "is_alive": true
+    "is_alive": true,
+    "depth": 1
 }

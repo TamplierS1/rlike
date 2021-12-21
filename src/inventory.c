@@ -28,14 +28,12 @@ Item* inv_find_item_ex(Inventory* inv, ItemCategory category, bool is_equipped)
 
 void inv_equip_item(Inventory* inv, int item_id)
 {
-    // TODO: the new item always gets equipped, the previous one
-    // is just unequipped.
     Item* item = inv_find_item(inv, item_id);
     // Check if any of the items are equipped.
     for (int i = 0; i < inv->items.length; i++)
     {
         if (inv->items.data[i].equipped && inv->items.data[i].category == item->category)
-            return;
+            inv_unequip_item(inv, inv->items.data[i].id);
     }
 
     if (item != NULL)

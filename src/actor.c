@@ -55,10 +55,6 @@ void actor_attack(Actor* victim, Actor* attacker)
     total_dmg -= actor_get_defence(victim);
 
     victim->hp -= total_dmg;
-
-    // TODO: move this check into `clear_dead_enemies` in game.c
-    if (victim->hp <= 0)
-        victim->is_alive = false;
 }
 
 void actor_on_event(Event* event)
