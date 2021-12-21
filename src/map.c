@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "libtcod/color.h"
-
 #include "map.h"
 #include "sds.h"
 #include "serialization.h"
@@ -18,6 +16,8 @@
 #define WALL_BACK_COLOR (TCOD_color_t){0, 0, 0}
 #define WALL_FORE_COLOR (TCOD_color_t){79, 73, 67}
 // clang-format on
+
+typedef vec_t(sds) vec_sds_t;
 
 static bool is_area_available(Map* map, Vec2 begin, Vec2 end)
 {
@@ -81,8 +81,67 @@ static Actor* find_enemy_template(sds name, vec_actor_t* templates)
     return NULL;
 }
 
+static Actor* rand_boss(int depth)
+{
+    vec_sds_t candidates;
+    vec_init(&candidates);
+
+    vec_actor_t* temps = boss_templates();
+
+    for (int i = 0; i < temps->length; i++)
+    {
+        if (temps->data[i].depth == depth)
+            vec_push(&candidates, temps->data[i].name);
+    }
+
+    if (candidates.length == 0)
+    {
+        error(__FILE__, __func__, __LINE__, "Failed to find random boss for depth %d",
+              depth);
+
+        vec_deinit(&candidates);
+        return NULL;
+    }
+
+    Actor* boss = find_enemy_template(
+        candidates.data[rand_random_int(0, candidates.length - 1)], boss_templates());
+
+    vec_deinit(&candidates);
+
+    return boss;
+}
+
+static Actor* rand_enemy(int depth)
+{
+    vec_sds_t candidates;
+    vec_init(&candidates);
+
+    vec_actor_t* temps = enemy_templates();
+
+    for (int i = 0; i < temps->length; i++)
+    {
+        if (temps->data[i].depth == depth)
+            vec_push(&candidates, temps->data[i].name);
+    }
+
+    if (candidates.length == 0)
+    {
+        error(__FILE__, __func__, __LINE__, "Failed to find random enemy for depth %d",
+              depth);
+
+        vec_deinit(&candidates);
+        return NULL;
+    }
+
+    Actor* enemy = find_enemy_template(
+        candidates.data[rand_random_int(0, candidates.length - 1)], enemy_templates());
+
+    vec_deinit(&candidates);
+    return enemy;
+}
+
 static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
-                        vec_actor_t* templates, int depth)
+                        vec_actor_t* templates)
 {
     static int enemy_id = 1;
 
@@ -97,15 +156,23 @@ static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
     Inventory inv = inv_create_inventory();
     for (int i = 0; i < template->inventory.items.length; i++)
     {
-        Item item = item_spawn_item(template->inventory.items.data[i].name, depth);
+        Item item =
+            item_spawn_item(template->inventory.items.data[i].name, template->depth);
         item.equipped = template->inventory.items.data[i].equipped;
         inv_add_item(&inv, &item);
         inv_equip_item(&inv, item.id);
     }
 
-    Actor enemy = {enemy_id++,   pos,          template->symbol,        template->color,
-                   sdsdup(name), template->hp, template->vision_radius, inv,
-                   true};
+    Actor enemy = {enemy_id++,
+                   pos,
+                   template->symbol,
+                   template->color,
+                   sdsdup(name),
+                   template->hp,
+                   template->vision_radius,
+                   inv,
+                   true,
+                   template->depth};
     vec_push(out_enemies, enemy);
 }
 
@@ -126,10 +193,12 @@ static void spawn_enemies(Map* map, vec_actor_t* out_enemies, Vec2 player_start_
         for (int j = 0; j < num_to_spawn; j++)
         {
             Vec2 pos = rand_pos_in_room(&room);
-            int enemy_to_spawn = rand_random_int(0, enemy_templates()->length - 1);
 
-            spawn_actor(enemy_templates()->data[enemy_to_spawn].name, pos, out_enemies,
-                        enemy_templates(), depth);
+            Actor* enemy = rand_enemy(depth);
+            if (enemy == NULL)
+                continue;
+
+            spawn_actor(enemy->name, pos, out_enemies, enemy_templates());
             num_spawned++;
         }
     }
@@ -261,14 +330,19 @@ static void place_exit(Map* map, Vec2 player_pos)
     map_tile(map, pos)->fore_color = TCOD_dark_grey;
 }
 
-static void spawn_enemy_boss(Map* map, Vec2 player_pos, vec_actor_t* out_enemies,
-                             int depth)
+static bool try_spawn_boss(Map* map, Vec2 player_pos, vec_actor_t* out_enemies, int depth)
 {
     // Don't spawn in the same room with player.
     Room* room = rand_room_no_player(map, player_pos);
     Vec2 pos = rand_pos_in_room(room);
 
-    spawn_actor(sdsnew("Boss"), pos, out_enemies, boss_templates(), depth);
+    Actor* boss = rand_boss(depth);
+    if (boss == NULL)
+        return false;
+
+    spawn_actor(boss->name, pos, out_enemies, boss_templates());
+
+    return true;
 }
 
 void map_init()
@@ -279,8 +353,7 @@ void map_init()
     srz_load_enemy_templates("res/bosses", boss_templates());
 }
 
-Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, bool spawn_boss,
-                  int depth)
+Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, int depth)
 {
     Map* map = malloc(sizeof(Map));
     vec_init(&map->rooms);
@@ -307,10 +380,8 @@ Map* map_generate(Vec2* out_player_start_pos, void* out_enemies, bool spawn_boss
     *out_player_start_pos = dig_rooms(map);
     spawn_enemies(map, (vec_actor_t*)out_enemies, *out_player_start_pos, depth);
 
-    if (spawn_boss)
-        spawn_enemy_boss(map, *out_player_start_pos, (vec_actor_t*)out_enemies, depth);
-    else
-        place_exit(map, *out_player_start_pos);
+    try_spawn_boss(map, *out_player_start_pos, (vec_actor_t*)out_enemies, depth);
+    place_exit(map, *out_player_start_pos);
 
     return map;
 }

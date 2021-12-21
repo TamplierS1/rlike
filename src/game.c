@@ -4,13 +4,9 @@
 #include <time.h>
 
 #include <SDL.h>
-#include "SDL_keycode.h"
-#include "SDL_video.h"
 #include "libtcod/color.h"
 #include "mt19937ar.h"
 
-#include "SDL_events.h"
-#include "SDL_scancode.h"
 #include "actor.h"
 #include "inventory.h"
 #include "item.h"
@@ -84,7 +80,7 @@ static bool load_map()
     return true;
 }
 
-static void generate_map(bool spawn_boss)
+static void generate_map()
 {
     Inventory inv = inv_create_inventory();
     Item weapon = item_spawn_item("Sword", g_game.depth);
@@ -95,11 +91,12 @@ static void generate_map(bool spawn_boss)
     inv_add_item(&inv, &armor);
     inv_equip_item(&inv, armor.id);
 
-    Actor player = {0,  {0, 0}, '@', (TCOD_color_t){204, 194, 184}, sdsnew("Player"), 100,
-                    12, inv,    true};
+    Actor player = {
+        0,   {0, 0}, '@', (TCOD_color_t){204, 194, 184}, sdsnew("Player"), 100, 12,
+        inv, true,   1};
 
     vec_init(&g_game.actors);
-    g_game.map = map_generate(&player.pos, &g_game.actors, spawn_boss, g_game.depth);
+    g_game.map = map_generate(&player.pos, &g_game.actors, g_game.depth);
     g_game.player_id = 0;
     vec_push(&g_game.actors, player);
 }
@@ -143,8 +140,10 @@ static void clear_dead_enemies()
 {
     for (int i = 0; i < g_game.actors.length; i++)
     {
-        if (!g_game.actors.data[i].is_alive)
+        if (g_game.actors.data[i].hp <= 0)
         {
+            g_game.actors.data[i].is_alive = false;
+
             EventDeath event_death = {&g_game.actors.data[i], g_game.map};
             Event event = {EVENT_DEATH, &event_death};
             event_send(&event);
@@ -160,7 +159,7 @@ static void descend()
     srz_save_player(find_player(), "res/saves/player.json");
 
     g_game.depth++;
-    generate_map(g_game.depth == 17 ? true : false);
+    generate_map();
 
     Vec2 generated_pos = find_player()->pos;
     srz_load_player("res/saves/player.json", find_player());
@@ -263,7 +262,8 @@ static bool handle_input(SDL_Keysym key)
             if (!find_player()->is_alive)
             {
                 nuke_enemies();
-                generate_map(false);
+                generate_map();
+                g_game.depth = 1;
             }
             break;
         case SDLK_n:
@@ -353,7 +353,7 @@ void init()
     map_init();
     if (!load_map())
     {
-        generate_map(false);
+        generate_map();
     }
 
     event_system_init();
@@ -420,6 +420,8 @@ static void free_actors()
 
 void end()
 {
+    clear_dead_enemies();
+
     log_end();
 
     srz_save_player(find_player(), "res/saves/player.json");

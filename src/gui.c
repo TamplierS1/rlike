@@ -3,9 +3,6 @@
 #include "libtcod.h"
 
 #include "gui.h"
-#include "libtcod/color.h"
-#include "libtcod/console.h"
-#include "libtcod/console_printing.h"
 #include "log.h"
 #include "sds.h"
 
