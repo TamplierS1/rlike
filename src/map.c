@@ -96,7 +96,7 @@ static Actor* rand_boss(int depth)
 
     if (candidates.length == 0)
     {
-        error(__FILE__, __func__, __LINE__, "Failed to find random boss for depth %d",
+        err_error(__FILE__, __func__, __LINE__, "Failed to find random boss for depth %d",
               depth);
 
         vec_deinit(&candidates);
@@ -126,7 +126,7 @@ static Actor* rand_enemy(int depth)
 
     if (candidates.length == 0)
     {
-        error(__FILE__, __func__, __LINE__, "Failed to find random enemy for depth %d",
+        err_error(__FILE__, __func__, __LINE__, "Failed to find random enemy for depth %d",
               depth);
 
         vec_deinit(&candidates);
@@ -148,7 +148,7 @@ static void spawn_actor(sds name, Vec2 pos, vec_actor_t* out_enemies,
     Actor* template = find_enemy_template(name, templates);
     if (template == NULL)
     {
-        error(__FILE__, __func__, __LINE__, "failed to spawn enemy %s at (%d, %d)", name,
+        err_error(__FILE__, __func__, __LINE__, "failed to spawn enemy %s at (%d, %d)", name,
               pos.x, pos.y);
         return;
     }

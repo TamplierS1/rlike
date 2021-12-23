@@ -10,26 +10,26 @@
         "g": 38,
         "b": 38
     },
-    "name": "Boss",
-    "hp": 190,
-    "vision_radius": 12,
+    "name": "Goblin Chieftain",
+    "hp": 70,
+    "vision_radius": 9,
     "inventory": {
         "items": [
             {
-                "name": "Katana",
+                "name": "Mace",
                 "id": -1,
                 "category": 0,
                 "item": {
-                    "physical_dmg": 26,
+                    "physical_dmg": 15,
                     "fire_dmg": 0,
                     "cold_dmg": 0,
                     "lightning_dmg": 0,
-                    "accuracy": 93
+                    "accuracy": 91
                 },
                 "equipped": true
             },
             {
-                "name": "Breastplate",
+                "name": "Plate Armor",
                 "id": -1,
                 "category": 1,
                 "item": {
@@ -45,5 +45,5 @@
         ]
     },
     "is_alive": true,
-    "depth": 2
+    "depth": 3
 }

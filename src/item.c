@@ -74,7 +74,7 @@ void item_init()
     if (srz_load_item_templates("res/items/weapons", &g_templates) != OK ||
         srz_load_item_templates("res/items/armor", &g_templates) != OK)
     {
-        fatal(__FILE__, __func__, __LINE__, "failed to load item templates");
+        err_fatal(__FILE__, __func__, __LINE__, "failed to load item templates");
     }
 }
 
@@ -100,7 +100,7 @@ Item item_spawn_item(sds name, int depth)
             memcpy(subitem, template->item, sizeof(ItemArmor));
             break;
         default:
-            fatal(__FILE__, __func__, __LINE__,
+            err_fatal(__FILE__, __func__, __LINE__,
                   "not all item category options were covered.");
             return spawn_empty_item(id++);
     }

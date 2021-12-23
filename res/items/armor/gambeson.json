@@ -1,0 +1,14 @@
+{
+    "name": "Gambeson",
+    "id": -1,
+    "category": 1,
+    "item": {
+        "defence": 1,
+        "evasion": 14,
+        "physical_resistance": 13,
+        "fire_resistance": 0,
+        "cold_resistance": 23,
+        "lightning_resistance": 10
+    },
+    "equipped": true
+}
