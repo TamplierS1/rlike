@@ -1,0 +1,14 @@
+{
+    "name": "Chain mail",
+    "id": -1,
+    "category": 1,
+    "item": {
+        "defence": 3,
+        "evasion": 13,
+        "physical_resistance": 22,
+        "fire_resistance": 0,
+        "cold_resistance": 0,
+        "lightning_resistance": 0
+    },
+    "equipped": true
+}

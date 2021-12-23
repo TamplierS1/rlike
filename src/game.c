@@ -83,16 +83,16 @@ static bool load_map()
 static void generate_map()
 {
     Inventory inv = inv_create_inventory();
-    Item weapon = item_spawn_item("Sword", g_game.depth);
+    Item weapon = item_spawn_item("Shortsword", g_game.depth);
     inv_add_item(&inv, &weapon);
     inv_equip_item(&inv, weapon.id);
 
-    Item armor = item_spawn_item("Leather armor", g_game.depth);
+    Item armor = item_spawn_item("Rags", g_game.depth);
     inv_add_item(&inv, &armor);
     inv_equip_item(&inv, armor.id);
 
     Actor player = {
-        0,   {0, 0}, '@', (TCOD_color_t){204, 194, 184}, sdsnew("Player"), 100, 12,
+        0,   {0, 0}, '@', (TCOD_color_t){204, 194, 184}, sdsnew("Player"), 80, 12,
         inv, true,   1};
 
     vec_init(&g_game.actors);
@@ -259,6 +259,7 @@ static bool handle_input(SDL_Keysym key)
             player_attack_or_move(prev_key, vec2(1, 0));
             break;
         case SDLK_r:
+            // TODO: you have to press 'r' twice to restart the game. Fix it.
             if (!find_player()->is_alive)
             {
                 nuke_enemies();
@@ -302,14 +303,14 @@ static void tcod_init()
 
     g_game.console = TCOD_console_new(g_game.width, g_game.height);
     if (!g_game.console)
-        fatal(__FILE__, __func__, __LINE__, "Could not open console: %s",
-              TCOD_get_error());
+        err_fatal(__FILE__, __func__, __LINE__, "Could not open console: %s",
+                  TCOD_get_error());
 
     g_game.tileset =
         TCOD_tileset_load("res/tileset.png", 16, 16, 256, TCOD_CHARMAP_CP437);
     if (!g_game.tileset)
-        fatal(__FILE__, __func__, __LINE__, "Failed to load tileset: %s",
-              TCOD_get_error());
+        err_fatal(__FILE__, __func__, __LINE__, "Failed to load tileset: %s",
+                  TCOD_get_error());
 
     const TCOD_ContextParams params = {.tcod_version = TCOD_COMPILEDVERSION,
                                        .renderer_type = TCOD_RENDERER_SDL2,
@@ -324,8 +325,8 @@ static void tcod_init()
                                        .window_xy_defined = true,
                                        .console = g_game.console};
     if (TCOD_context_new(&params, &g_game.context) < 0)
-        fatal(__FILE__, __func__, __LINE__, "Could not open context: %s",
-              TCOD_get_error());
+        err_fatal(__FILE__, __func__, __LINE__, "Could not open context: %s",
+                  TCOD_get_error());
 }
 
 void init()

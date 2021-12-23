@@ -16,17 +16,31 @@
     "inventory": {
         "items": [
             {
-                "name": "Stiletto",
+                "name": "Dagger",
+                "id": -1,
                 "category": 0,
                 "item": {
-                    "physical_dmg": 8,
+                    "physical_dmg": 4,
                     "fire_dmg": 0,
                     "cold_dmg": 0,
                     "lightning_dmg": 0,
-                    "accuracy": 97
+                    "accuracy": 92
                 },
-                "equipped": true,
-                "id": -1
+                "equipped": true
+            },
+            {
+                "name": "Rags",
+                "id": -1,
+                "category": 1,
+                "item": {
+                    "defence": 0,
+                    "evasion": 20,
+                    "physical_resistance": 0,
+                    "fire_resistance": 0,
+                    "cold_resistance": 5,
+                    "lightning_resistance": 0
+                },
+                "equipped": true
             }
         ]
     },

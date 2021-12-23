@@ -57,9 +57,6 @@ Inventory inv_create_inventory()
 
 void inv_add_item(Inventory* inv, Item* item)
 {
-    if (inv_find_item(inv, item->id) != NULL)
-        return;
-
     vec_push(&inv->items, *item);
 }
 

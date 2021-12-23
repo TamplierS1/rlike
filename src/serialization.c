@@ -17,7 +17,7 @@ static char* read_json_from_file(const char* path, Error* out_err)
     if (file == NULL)
     {
         *out_err = ERROR_FILE_IO;
-        error(__FILE__, __func__, __LINE__, "failed to open file %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to open file %s", path);
         return NULL;
     }
 
@@ -31,7 +31,7 @@ static char* read_json_from_file(const char* path, Error* out_err)
     {
         free(buffer);
         *out_err = ERROR_FILE_IO;
-        error(__FILE__, __func__, __LINE__, "failed to read the contents of %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to read the contents of %s", path);
         return NULL;
     }
 
@@ -47,7 +47,7 @@ static Error write_json_to_file(const char* path, struct json_object* object,
     FILE* file = fopen(path, mode);
     if (file == NULL)
     {
-        error(__FILE__, __func__, __LINE__, "failed to serialize to %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to serialize to %s", path);
         return ERROR_FILE_IO;
     }
 
@@ -67,7 +67,7 @@ static Error get_jobject_from_jstring(const char* json_string,
     enum json_tokener_error err = json_tokener_get_error(tokener);
     if (jobject == NULL && err != json_tokener_continue)
     {
-        error(__FILE__, __func__, __LINE__,
+        err_error(__FILE__, __func__, __LINE__,
               "failed to parse json when parsing an "
               "object - %s",
               json_tokener_error_desc(err));
@@ -198,7 +198,7 @@ static bool deserialize_item(struct json_object* parent, Item* out_item)
             break;
         }
         default:
-            fatal(__FILE__, __func__, __LINE__,
+            err_fatal(__FILE__, __func__, __LINE__,
                   "not all deserialization options were covered.");
             break;
     }
@@ -392,7 +392,7 @@ static void serialize_item_to_array(struct json_object* parent, Item* item)
             break;
         }
         default:
-            fatal(__FILE__, __func__, __LINE__,
+            err_fatal(__FILE__, __func__, __LINE__,
                   "not all deserialization options were covered.");
             break;
     }
@@ -538,7 +538,7 @@ Error srz_load_enemy_templates(const char* path, vec_actor_t* out_templates)
     DIR* dir = opendir(path);
     if (dir == NULL)
     {
-        error(__FILE__, __func__, __LINE__, "failed to open directory %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to open directory %s", path);
         closedir(dir);
         return ERROR_FILE_IO;
     }
@@ -569,7 +569,7 @@ Error srz_load_enemy_templates(const char* path, vec_actor_t* out_templates)
         Actor enemy;
         if (!deserialize_actor(jenemy, &enemy))
         {
-            error(__FILE__, __func__, __LINE__,
+            err_error(__FILE__, __func__, __LINE__,
                   "failed to load the enemy template from %s", path);
             return ERROR_JSON_DESERIALIZE;
         }
@@ -586,7 +586,7 @@ Error srz_load_item_templates(const char* path, vec_item_t* out_templates)
     DIR* dir = opendir(path);
     if (dir == NULL)
     {
-        error(__FILE__, __func__, __LINE__, "failed to open directory %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to open directory %s", path);
         closedir(dir);
         return ERROR_FILE_IO;
     }
@@ -617,7 +617,7 @@ Error srz_load_item_templates(const char* path, vec_item_t* out_templates)
         Item item;
         if (!deserialize_item(jitem, &item))
         {
-            error(__FILE__, __func__, __LINE__, "failed to load item template from %s",
+            err_error(__FILE__, __func__, __LINE__, "failed to load item template from %s",
                   path);
             continue;
         }
@@ -647,7 +647,7 @@ Error srz_load_map(const char* path, Map* out_map)
     free(json_string);
     if (!deserialize_map(jmap, out_map))
     {
-        error(__FILE__, __func__, __LINE__, "failed to load the map from %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to load the map from %s", path);
         return ERROR_JSON_DESERIALIZE;
     }
     return OK;
@@ -673,7 +673,7 @@ Error srz_load_player(const char* path, Actor* out_actor)
 
     if (!deserialize_actor(jactor, out_actor))
     {
-        error(__FILE__, __func__, __LINE__, "failed to load the actor from %s", path);
+        err_error(__FILE__, __func__, __LINE__, "failed to load the actor from %s", path);
         return ERROR_JSON_DESERIALIZE;
     }
     return OK;
@@ -703,7 +703,7 @@ Error srz_load_enemies(const char* path, vec_actor_t* out_enemies)
         Actor enemy;
         if (!deserialize_actor(jenemy, &enemy))
         {
-            error(__FILE__, __func__, __LINE__, "failed to load the enemies from %s",
+            err_error(__FILE__, __func__, __LINE__, "failed to load the enemies from %s",
                   path);
             return ERROR_JSON_DESERIALIZE;
         }
@@ -737,7 +737,7 @@ Error srz_save_enemies(const vec_actor_t* enemies, const char* path)
         struct json_object* jenemy = serialize_actor(&enemies->data[i]);
         if (jenemy == NULL)
         {
-            error(__FILE__, __func__, __LINE__, "failed to save the enemies to %s", path);
+            err_error(__FILE__, __func__, __LINE__, "failed to save the enemies to %s", path);
             continue;
         }
 

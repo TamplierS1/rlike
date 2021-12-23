@@ -1,13 +1,13 @@
 {
-    "name": "Dagger",
+    "name": "Club",
     "id": -1,
     "category": 0,
     "item": {
-        "physical_dmg": 4,
+        "physical_dmg": 6,
         "fire_dmg": 0,
         "cold_dmg": 0,
         "lightning_dmg": 0,
-        "accuracy": 92
+        "accuracy": 90
     },
     "equipped": true
 }

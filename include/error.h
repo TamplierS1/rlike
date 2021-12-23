@@ -14,8 +14,7 @@ typedef enum
     OK
 } Error;
 
-// TODO: fix names.
-void error(const char* file, const char* function, int line, const char* format, ...);
-void fatal(const char* file, const char* function, int line, const char* format, ...);
+void err_error(const char* file, const char* function, int line, const char* format, ...);
+void err_fatal(const char* file, const char* function, int line, const char* format, ...);
 
 #endif  // ERROR_H

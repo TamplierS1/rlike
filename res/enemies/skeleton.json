@@ -1,0 +1,35 @@
+{
+    "id": -1,
+    "pos": {
+        "x": -1,
+        "y": -1
+    },
+    "symbol": 115,
+    "color": {
+        "r": 187,
+        "g": 193,
+        "b": 182
+    },
+    "name": "Skeleton",
+    "hp": 14,
+    "vision_radius": 6,
+    "inventory": {
+        "items": [
+            {
+                "name": "Club",
+                "id": -1,
+                "category": 0,
+                "item": {
+                    "physical_dmg": 6,
+                    "fire_dmg": 0,
+                    "cold_dmg": 0,
+                    "lightning_dmg": 0,
+                    "accuracy": 90
+                },
+                "equipped": true
+            }
+        ]
+    },
+    "is_alive": true,
+    "depth": 1
+}
